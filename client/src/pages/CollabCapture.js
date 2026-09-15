@@ -31,6 +31,15 @@ const selectClasses =
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+const waitFor = async (checkFn, intervalMs = 150, timeoutMs = 20000) => {
+  const start = Date.now()
+  while (!checkFn()) {
+    if (Date.now() - start > timeoutMs) return false
+    await sleep(intervalMs)
+  }
+  return true
+}
+
 export default function CollabCapture() {
   const { roomCode } = useParams()
   const location = useLocation()
@@ -49,6 +58,7 @@ export default function CollabCapture() {
   const [filter, setFilter] = useState(FILTERS[0])
   const [friendName, setFriendName] = useState('')
   const [friendConnected, setFriendConnected] = useState(false)
+  const [memberCount, setMemberCount] = useState(1)
   const [localReady, setLocalReady] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const [countdown, setCountdown] = useState(null)
@@ -180,19 +190,17 @@ export default function CollabCapture() {
   useEffect(() => {
     if (!roomCode) return
 
-    const handleRoomUsers = async (members) => {
+    const handleRoomUsers = (members) => {
       const friend = members.find((m) => m.id !== socket.id)
       setFriendName(friend?.name || '')
-      if (members.length === 2 && isHost && !pcRef.current && localStreamRef.current) {
-        const pc = createPeerConnection()
-        const offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-        socket.emit('webrtc-signal', { roomCode, signal: { type: 'offer', sdp: offer } })
-      }
+      setMemberCount(members.length)
     }
 
     const handleSignal = async ({ signal }) => {
       if (signal.type === 'offer') {
+        // Make sure our own camera is ready before answering, so the track
+        // actually gets attached instead of racing the permission prompt.
+        await waitFor(() => !!localStreamRef.current)
         const pc = pcRef.current || createPeerConnection()
         await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp))
         const answer = await pc.createAnswer()
@@ -223,6 +231,24 @@ export default function CollabCapture() {
       socket.off('capture-start', handleCaptureStart)
     }
   }, [roomCode, isHost, createPeerConnection, runCaptureSequence])
+
+  // Once both the room has 2 people AND our own camera is ready — whichever
+  // finishes last — the host creates the WebRTC offer. Guarding on
+  // !pcRef.current makes this safe to re-run as either dependency changes.
+  useEffect(() => {
+    if (memberCount !== 2 || !isHost || !localReady || pcRef.current) return
+    let cancelled = false
+    ;(async () => {
+      const pc = createPeerConnection()
+      const offer = await pc.createOffer()
+      if (cancelled) return
+      await pc.setLocalDescription(offer)
+      socket.emit('webrtc-signal', { roomCode, signal: { type: 'offer', sdp: offer } })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [memberCount, isHost, localReady, createPeerConnection, roomCode])
 
   // Save the finished strip once, tagged as collaborative.
   useEffect(() => {
