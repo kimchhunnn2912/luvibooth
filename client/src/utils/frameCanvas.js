@@ -72,6 +72,16 @@ export const drawStripBase = async (ctx, { layout, photos, borderColor }) => {
 
 const DEFAULT_BORDER_COLOR = '#1f2937'
 
+const downscaleForStorage = (canvas, maxDim = 640) => {
+  const scale = Math.min(1, maxDim / Math.max(canvas.width, canvas.height))
+  if (scale >= 1) return canvas.toDataURL('image/jpeg', 0.85)
+  const small = document.createElement('canvas')
+  small.width = canvas.width * scale
+  small.height = canvas.height * scale
+  small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height)
+  return small.toDataURL('image/jpeg', 0.85)
+}
+
 export const composeStripPreview = async ({ layout, photos, borderColor = DEFAULT_BORDER_COLOR }) => {
   const { width, height } = getStripCanvasSize(layout)
   const canvas = document.createElement('canvas')
@@ -79,5 +89,41 @@ export const composeStripPreview = async ({ layout, photos, borderColor = DEFAUL
   canvas.height = height
   const ctx = canvas.getContext('2d')
   await drawStripBase(ctx, { layout, photos, borderColor })
-  return canvas.toDataURL('image/jpeg', 0.85)
+  return downscaleForStorage(canvas)
+}
+
+// Same idea as composeStripPreview, but for a real image-based frame template:
+// draws each photo into its native slot rect, then lays the template's own
+// (already-transparent) artwork on top so the true frame shape shows correctly.
+export const composeTemplatePreview = async ({ template, photos }) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = template.canvasWidth
+  canvas.height = template.canvasHeight
+  const ctx = canvas.getContext('2d')
+
+  for (let i = 0; i < template.slots.length; i++) {
+    const slot = template.slots[i]
+    const photoSrc = photos[i]
+    if (!photoSrc) continue
+    try {
+      const img = await loadImage(photoSrc)
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(slot.x, slot.y, slot.w, slot.h)
+      ctx.clip()
+      drawImageCover(ctx, img, slot.x, slot.y, slot.w, slot.h)
+      ctx.restore()
+    } catch {
+      // skip photo if it fails to load
+    }
+  }
+
+  try {
+    const overlayImg = await loadImage(template.overlay)
+    ctx.drawImage(overlayImg, 0, 0, template.canvasWidth, template.canvasHeight)
+  } catch {
+    // skip overlay art if it fails to load
+  }
+
+  return downscaleForStorage(canvas)
 }

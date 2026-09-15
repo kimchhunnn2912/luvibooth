@@ -50,6 +50,33 @@ export function AuthProvider({ children }) {
     return data.user
   }
 
+  const updateProfile = async ({ firstName, lastName, username }) => {
+    if (username !== user?.user_metadata?.username) {
+      const { data: existing, error: lookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .neq('id', user.id)
+        .maybeSingle()
+      if (lookupError) throw lookupError
+      if (existing) throw new Error('That username is already taken.')
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: { first_name: firstName, last_name: lastName, username },
+    })
+    if (error) throw error
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ username })
+      .eq('id', user.id)
+    if (profileError) throw profileError
+
+    setUser(data.user)
+    return data.user
+  }
+
   const resetPassword = async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -71,7 +98,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, resetPassword, loginWithGoogle, logout }}
+      value={{ user, loading, login, register, updateProfile, resetPassword, loginWithGoogle, logout }}
     >
       {children}
     </AuthContext.Provider>

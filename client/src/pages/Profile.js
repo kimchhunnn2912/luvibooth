@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Pencil, Crown, Users, Plus, Minus, LogOut } from 'lucide-react'
+import { Pencil, Crown, Users, Plus, Minus, LogOut, Check, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -36,11 +36,17 @@ const pillClasses = (active) =>
   }`
 
 export default function Profile() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateProfile } = useAuth()
   const navigate = useNavigate()
   const [filter, setFilter] = useState('All')
   const [strips, setStrips] = useState([])
   const [stripsLoading, setStripsLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editFirstName, setEditFirstName] = useState('')
+  const [editLastName, setEditLastName] = useState('')
+  const [editUsername, setEditUsername] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -80,6 +86,40 @@ export default function Profile() {
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || ''
   const initial = (firstName || fullName || user?.email || '?').charAt(0).toUpperCase()
 
+  const handleStartEdit = () => {
+    setEditFirstName(firstName || '')
+    setEditLastName(lastName || '')
+    setEditUsername(username || '')
+    setSaveError('')
+    setIsEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setSaveError('')
+  }
+
+  const handleSaveProfile = async () => {
+    if (!editUsername.trim()) {
+      setSaveError('Username cannot be empty.')
+      return
+    }
+    setSaving(true)
+    setSaveError('')
+    try {
+      await updateProfile({
+        firstName: editFirstName.trim(),
+        lastName: editLastName.trim(),
+        username: editUsername.trim().replace(/\s/g, '').toLowerCase(),
+      })
+      setIsEditing(false)
+    } catch (err) {
+      setSaveError(err.message || 'Could not save your profile. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const STATS = [
     { label: 'Photo strips taken', value: strips.length },
     { label: 'coins remaining', value: 350, icon: coinIcon },
@@ -101,30 +141,87 @@ export default function Profile() {
             {initial}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-extrabold text-dark">{fullName}</h1>
-            {username && <p className="text-gray-500">@{username}</p>}
-            <p className="text-gray-500">{user?.email}</p>
-            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-white text-sm font-semibold px-3 py-1">
-              <Crown size={14} />
-              Pro member
-            </span>
+            {isEditing ? (
+              <div className="space-y-3 max-w-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    placeholder="First name"
+                    className="w-full rounded-xl border border-gray-200 bg-slate-50 px-3 py-2 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
+                  />
+                  <input
+                    type="text"
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    placeholder="Last name"
+                    className="w-full rounded-xl border border-gray-200 bg-slate-50 px-3 py-2 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+                  placeholder="username"
+                  className="w-full rounded-xl border border-gray-200 bg-slate-50 px-3 py-2 text-sm text-dark focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
+                />
+                {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+              </div>
+            ) : (
+              <>
+                <h1 className="text-2xl font-extrabold text-dark">{fullName}</h1>
+                {username && <p className="text-gray-500">@{username}</p>}
+                <p className="text-gray-500">{user?.email}</p>
+                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-white text-sm font-semibold px-3 py-1">
+                  <Crown size={14} />
+                  Pro member
+                </span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-4 self-start sm:self-center">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-primary transition"
-            >
-              <Pencil size={16} />
-              Edit profile
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 text-gray-500 hover:text-red-500 transition"
-            >
-              <LogOut size={16} />
-              Log out
-            </button>
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 text-pink-primary hover:opacity-80 transition disabled:opacity-50"
+                >
+                  <Check size={16} />
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 text-gray-500 hover:text-red-500 transition disabled:opacity-50"
+                >
+                  <X size={16} />
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleStartEdit}
+                  className="inline-flex items-center gap-2 text-gray-500 hover:text-pink-primary transition"
+                >
+                  <Pencil size={16} />
+                  Edit profile
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-2 text-gray-500 hover:text-red-500 transition"
+                >
+                  <LogOut size={16} />
+                  Log out
+                </button>
+              </>
+            )}
           </div>
         </div>
 

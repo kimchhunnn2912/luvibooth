@@ -17,6 +17,7 @@ import Profile from './pages/Profile'
 import CollabBooth from './pages/CollabBooth'
 import CollabCapture from './pages/CollabCapture'
 import BrowseFrames from './pages/BrowseFrames'
+import FrameRecommendation from './pages/FrameRecommendation'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/photobooth" element={<Photobooth />} />
             <Route path="/photobooth/capture" element={<CameraCapture />} />
             <Route path="/photobooth/design" element={<FrameDesigner />} />
+            <Route path="/photobooth/recommend" element={<FrameRecommendation />} />
             <Route path="/frame" element={<BrowseFrames />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/contact" element={<ContactUs />} />

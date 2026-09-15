@@ -6,6 +6,8 @@ import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
 import { loadImage, drawStripBase, drawImageCover } from '../utils/frameCanvas'
 import { getTwemojiUrl, getFluentUrl } from '../utils/stickerIcons'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../services/supabaseClient'
 
 const TOOLS = [
   { id: 'sticker', label: 'Sticker', icon: Smile },
@@ -103,9 +105,11 @@ const toolButtonClasses = (active) =>
 export default function FrameDesigner() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const layoutId = location.state?.layoutId || 'A'
   const capturedPhotos = location.state?.photos || []
   const template = location.state?.template || null
+  const stripId = location.state?.stripId || null
   const layout = LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
 
   const buildTemplateElements = (tpl) => {
@@ -397,7 +401,7 @@ export default function FrameDesigner() {
   }
 
   const handleRetakePhotos = () => {
-    navigate('/photobooth/capture', { state: { layoutId, template } })
+    navigate('/photobooth/capture', { state: { layoutId, template, stripId } })
   }
 
   const drawElements = async (ctx, scale) => {
@@ -477,6 +481,24 @@ export default function FrameDesigner() {
     link.download = `${frameName.trim() || 'luvibooth-frame'}.png`
     link.href = exportCanvas.toDataURL('image/png')
     link.click()
+
+    // Also sync the profile's saved preview to this decorated version, so
+    // "My recent photo strips" reflects the actual frame, not the raw capture.
+    if (stripId && user) {
+      const previewCanvas = document.createElement('canvas')
+      const previewScale = Math.min(1, 640 / exportCanvas.width)
+      previewCanvas.width = exportCanvas.width * previewScale
+      previewCanvas.height = exportCanvas.height * previewScale
+      previewCanvas.getContext('2d').drawImage(exportCanvas, 0, 0, previewCanvas.width, previewCanvas.height)
+      const preview = previewCanvas.toDataURL('image/jpeg', 0.85)
+      supabase
+        .from('photo_strips')
+        .update({ preview })
+        .eq('id', stripId)
+        .then(({ error }) => {
+          if (error) console.error('Failed to update saved photo strip preview:', error.message)
+        })
+    }
   }
 
   const handleDownloadVideo = async () => {

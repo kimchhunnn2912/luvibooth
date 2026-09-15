@@ -6,7 +6,7 @@ import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
-import { composeStripPreview } from '../utils/frameCanvas'
+import { composeStripPreview, composeTemplatePreview } from '../utils/frameCanvas'
 
 const DELAYS = [3, 5, 10]
 
@@ -56,6 +56,7 @@ export default function CameraCapture() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const initialLayoutId = location.state?.layoutId || 'A'
+  const template = location.state?.template || null
 
   const [mode, setMode] = useState('capture')
   const [layoutId, setLayoutId] = useState(initialLayoutId)
@@ -66,7 +67,6 @@ export default function CameraCapture() {
   const [capturing, setCapturing] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const [streamReady, setStreamReady] = useState(false)
-  const [showComingSoon, setShowComingSoon] = useState(false)
   const [retakeIndex, setRetakeIndex] = useState(null)
   const [replaceIndex, setReplaceIndex] = useState(null)
   const [cropQueue, setCropQueue] = useState([])
@@ -80,6 +80,7 @@ export default function CameraCapture() {
   const cancelRef = useRef(false)
   const cropDragRef = useRef(null)
   const savedStripRef = useRef(false)
+  const stripIdRef = useRef(location.state?.stripId || null)
 
   const layout = LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
   const done = photos.length >= layout.boxes
@@ -140,15 +141,31 @@ export default function CameraCapture() {
     if (savedStripRef.current) return
     savedStripRef.current = true
     if (!user) return
-    composeStripPreview({ layout, photos })
-      .then((preview) =>
-        supabase.from('photo_strips').insert({ user_id: user.id, layout_id: layoutId, photos, preview })
-      )
+    const composePreview =
+      template?.type === 'image' ? composeTemplatePreview({ template, photos }) : composeStripPreview({ layout, photos })
+    composePreview
+      .then((preview) => {
+        if (stripIdRef.current) {
+          return supabase
+            .from('photo_strips')
+            .update({ layout_id: layoutId, photos, preview })
+            .eq('id', stripIdRef.current)
+        }
+        return supabase
+          .from('photo_strips')
+          .insert({ user_id: user.id, layout_id: layoutId, photos, preview })
+          .select('id')
+          .single()
+          .then(({ data, error }) => {
+            if (data) stripIdRef.current = data.id
+            return { error }
+          })
+      })
       .then(({ error }) => {
         if (error) console.error('Failed to save photo strip:', error.message)
       })
       .catch((err) => console.error('Failed to compose photo strip preview:', err))
-  }, [done, user, layoutId, photos, layout])
+  }, [done, user, layoutId, photos, layout, template])
 
   useEffect(() => {
     if (cropQueue.length === 0) {
@@ -174,7 +191,6 @@ export default function CameraCapture() {
   const handleModeChange = (m) => {
     if (m === mode || busy) return
     setPhotos([])
-    setShowComingSoon(false)
     setMode(m)
   }
 
@@ -182,7 +198,6 @@ export default function CameraCapture() {
     if (busy) return
     setLayoutId(id)
     setPhotos([])
-    setShowComingSoon(false)
   }
 
   const captureFrame = () => {
@@ -304,7 +319,9 @@ export default function CameraCapture() {
   }
 
   const handleContinue = () => {
-    navigate('/photobooth/design', { state: { layoutId, photos, template: location.state?.template || null } })
+    navigate('/photobooth/design', {
+      state: { layoutId, photos, template: location.state?.template || null, stripId: stripIdRef.current },
+    })
   }
 
   const runRetake = async (index) => {
@@ -522,12 +539,11 @@ export default function CameraCapture() {
             <p className="text-base font-semibold text-dark">Try Smart Frame Recommendation!</p>
             <button
               type="button"
-              onClick={() => setShowComingSoon(true)}
+              onClick={() => navigate('/photobooth/recommend', { state: { layoutId, photos } })}
               className="mt-3 inline-flex items-center gap-2 rounded-full bg-pink-primary text-white font-semibold px-6 py-2.5 hover:opacity-90 transition"
             >
               Smart Frame Recommendation <Sparkles size={18} />
             </button>
-            {showComingSoon && <p className="mt-3 text-sm text-gray-400">Coming soon!</p>}
           </div>
         )}
       </section>

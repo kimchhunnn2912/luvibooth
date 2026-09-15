@@ -61,6 +61,7 @@ export default function CollabCapture() {
   const pcRef = useRef(null)
   const cancelRef = useRef(false)
   const savedStripRef = useRef(false)
+  const stripIdRef = useRef(location.state?.stripId || null)
 
   const layout = LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
   const done = photos.length >= layout.boxes
@@ -233,15 +234,23 @@ export default function CollabCapture() {
     savedStripRef.current = true
     if (!user) return
     composeStripPreview({ layout, photos })
-      .then((preview) =>
-        supabase.from('photo_strips').insert({
-          user_id: user.id,
-          layout_id: layoutId,
-          photos,
-          preview,
-          collaborative: true,
-        })
-      )
+      .then((preview) => {
+        if (stripIdRef.current) {
+          return supabase
+            .from('photo_strips')
+            .update({ layout_id: layoutId, photos, preview, collaborative: true })
+            .eq('id', stripIdRef.current)
+        }
+        return supabase
+          .from('photo_strips')
+          .insert({ user_id: user.id, layout_id: layoutId, photos, preview, collaborative: true })
+          .select('id')
+          .single()
+          .then(({ data, error }) => {
+            if (data) stripIdRef.current = data.id
+            return { error }
+          })
+      })
       .then(({ error }) => {
         if (error) console.error('Failed to save photo strip:', error.message)
       })
@@ -261,7 +270,7 @@ export default function CollabCapture() {
   }
 
   const handleContinue = () => {
-    navigate('/photobooth/design', { state: { layoutId, photos } })
+    navigate('/photobooth/design', { state: { layoutId, photos, stripId: stripIdRef.current } })
   }
 
   return (
