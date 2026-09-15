@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# env files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# production builds
+/client/build
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server_start.log
+client_start.log
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+
+# Claude Code session files
+.claude/
