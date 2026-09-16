@@ -3,7 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import CheckoutModal from '../components/CheckoutModal'
+import { useAuth } from '../context/AuthContext'
 import coinIcon from '../assets/coin.png'
+
+const parsePriceToCents = (price) => Math.round(parseFloat(price.replace('$', '')) * 100)
 
 const PLANS = [
   {
@@ -47,7 +51,9 @@ const COIN_PACKS = [
  
 export default function Pricing() {
   const { hash } = useLocation()
+  const { user } = useAuth()
   const [selectedPlan, setSelectedPlan] = useState(null)
+  const [checkoutItem, setCheckoutItem] = useState(null)
 
   useEffect(() => {
     if (!hash) return
@@ -85,13 +91,31 @@ export default function Pricing() {
               <span className="text-gray-400">/month</span>
             </div>
 
-            <Link
-              to="/signup"
-              onClick={(e) => e.stopPropagation()}
-              className="mt-6 block rounded-full bg-pink-primary text-white font-semibold py-3 hover:opacity-90 transition"
-            >
-              {plan.cta}
-            </Link>
+            {plan.price !== '$0' && user ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setCheckoutItem({
+                    label: plan.name,
+                    priceLabel: `${plan.price}/month`,
+                    amountCents: parsePriceToCents(plan.price),
+                    description: `${plan.name} subscription`,
+                  })
+                }}
+                className="mt-6 block w-full rounded-full bg-pink-primary text-white font-semibold py-3 hover:opacity-90 transition"
+              >
+                {plan.cta}
+              </button>
+            ) : (
+              <Link
+                to="/signup"
+                onClick={(e) => e.stopPropagation()}
+                className="mt-6 block rounded-full bg-pink-primary text-white font-semibold py-3 hover:opacity-90 transition"
+              >
+                {plan.cta}
+              </Link>
+            )}
 
             <ul className="mt-8 space-y-3 text-sm text-gray-600 text-left">
               {plan.features.map((feature) => (
@@ -129,7 +153,16 @@ export default function Pricing() {
                 <p className="mt-2 text-gray-500">{pack.price}</p>
                 <button
                   type="button"
-                  onClick={() => window.alert('Coin purchases are coming soon!')}
+                  onClick={() =>
+                    user
+                      ? setCheckoutItem({
+                          label: `${pack.coins} coins`,
+                          priceLabel: pack.price,
+                          amountCents: parsePriceToCents(pack.price),
+                          description: `${pack.coins} Luvibooth coins`,
+                        })
+                      : window.alert('Please log in first to buy coins.')
+                  }
                   className="mt-5 w-full rounded-full bg-pink-primary text-white font-semibold py-2.5 hover:opacity-90 transition"
                 >
                   Buy now
@@ -141,6 +174,8 @@ export default function Pricing() {
       </section>
 
       <Footer />
+
+      {checkoutItem && <CheckoutModal item={checkoutItem} onClose={() => setCheckoutItem(null)} />}
     </div>
   )
 }
