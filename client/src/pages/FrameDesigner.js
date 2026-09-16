@@ -640,13 +640,13 @@ export default function FrameDesigner() {
           {activeTool === 'sticker' && (
             <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
               <h2 className="text-lg font-semibold text-gray-500">Stickers</h2>
-              <div className="mt-3 grid grid-cols-4 gap-2">
+              <div className="mt-3 grid grid-cols-5 sm:grid-cols-4 gap-1.5">
                 {STICKERS.map((sticker, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => handleAddSticker(sticker)}
-                    className="aspect-square rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-2 transition"
+                    className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
                   >
                     <img
                       src={getFluentUrl(sticker.slug)}

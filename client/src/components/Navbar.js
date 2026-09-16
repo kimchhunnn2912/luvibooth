@@ -28,7 +28,7 @@ export default function Navbar() {
     .toUpperCase()
 
   return (
-    <header className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-100">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between px-6 md:px-16 py-4">
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
           <img src={luviLogoIcon} alt="Luvibooth" className="h-7 sm:h-9 w-auto" />
