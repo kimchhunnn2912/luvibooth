@@ -25,7 +25,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-pink-50 to-white px-6 py-12">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-pink-100 via-pink-50 to-white px-6 py-12">
       <div className="w-full max-w-md text-center">
         <div className="flex flex-col items-center mb-10">
           <img src={luviLogo} alt="Luvibooth" className="h-20 w-auto" />

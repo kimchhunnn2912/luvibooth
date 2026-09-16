@@ -48,7 +48,7 @@ const SECTIONS = [
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="bg-pink-50 text-center py-16 px-6">

@@ -609,7 +609,7 @@ export default function FrameDesigner() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <div className="max-w-[1600px] mx-auto px-6 md:px-10 pt-6">

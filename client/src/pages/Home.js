@@ -48,7 +48,7 @@ const STEPS = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="bg-gradient-to-br from-pink-100 via-pink-50 to-white">

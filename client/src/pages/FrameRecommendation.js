@@ -44,7 +44,7 @@ export default function FrameRecommendation() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="max-w-[1200px] mx-auto px-6 md:px-16 py-10 text-center">

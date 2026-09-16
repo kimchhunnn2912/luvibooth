@@ -132,7 +132,7 @@ export default function Profile() {
   })
 
   return (
-    <div className="min-h-screen bg-pink-50/60">
+    <div className="min-h-dvh bg-pink-50/60">
       <Navbar />
 
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-8">

@@ -363,7 +363,7 @@ export default function CameraCapture() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-6">

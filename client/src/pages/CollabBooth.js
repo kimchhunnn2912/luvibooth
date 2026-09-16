@@ -81,7 +81,7 @@ export default function CollabBooth() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="max-w-[1000px] mx-auto px-6 md:px-10 py-16 text-center">

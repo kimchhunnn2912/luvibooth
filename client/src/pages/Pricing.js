@@ -48,7 +48,7 @@ export default function Pricing() {
   }, [hash])
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       <section className="max-w-5xl mx-auto px-6 md:px-10 pt-16 pb-4 text-center">
