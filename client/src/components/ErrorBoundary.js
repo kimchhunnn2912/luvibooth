@@ -30,6 +30,9 @@ export default class ErrorBoundary extends React.Component {
             >
               Reload
             </button>
+            <pre className="mt-6 text-left text-[11px] leading-snug text-gray-400 whitespace-pre-wrap break-words bg-gray-50 rounded-lg p-3">
+              {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+            </pre>
           </div>
         </div>
       )
