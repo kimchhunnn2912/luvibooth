@@ -10,9 +10,9 @@ import coinIcon from '../assets/coin.png'
 
 const PLAN = {
   name: 'Pro',
-  perks: ['No watermark', '50 coins per month'],
+  perks: ['No watermark', '70 coins per month', '3 collab booth sessions / day'],
   renewDate: 'August 25, 2026',
-  price: '$2.99',
+  price: '$1.99',
 }
 
 // No backend yet for coin transactions, so new users correctly start with

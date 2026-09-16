@@ -10,31 +10,39 @@ const PLANS = [
     name: 'Free Plan',
     price: '$0',
     cta: 'Get Started',
-    features: ['Basic feature', '2 photos per day', 'Basic frame'],
+    features: ['3 photos per day', 'Free frames only', 'Watermark on downloads'],
   },
   {
     name: 'Pro Plan',
-    price: '$2.99',
+    price: '$1.99',
     cta: 'Upgrade to Pro',
-    features: ['50 coin / month', 'No watermark', 'Smart frame recommendation'],
+    features: [
+      '10 photos per day',
+      'No watermark',
+      'Smart frame recommendation',
+      '3 collab booth sessions / day',
+      '70 coins / month',
+    ],
   },
   {
     name: 'Pro Max Plan',
-    price: '$4.99',
+    price: '$3.99',
     cta: 'Upgrade to Pro Max',
     features: [
-      '150 coins / month',
-      'Early access to new frames',
+      '30 photos per day',
+      'No watermark',
       'Smart frame recommendation',
-      'Collaborative booth',
+      'Unlimited collab booth',
+      'Early access to new frames',
+      '160 coins / month',
     ],
   },
 ]
 
 const COIN_PACKS = [
-  { coins: 100, price: '$1.00' },
-  { coins: 600, price: '$5.00' },
-  { coins: 1500, price: '$10.00' },
+  { coins: 60, price: '$1.00' },
+  { coins: 200, price: '$3.00' },
+  { coins: 350, price: '$5.00' },
 ]
  
 export default function Pricing() {
