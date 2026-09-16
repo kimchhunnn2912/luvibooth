@@ -6,18 +6,16 @@ import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { saveOrShareBlob, dataUrlToBlob } from '../utils/saveFile'
+import { getPlanByName } from '../constants/plans'
 import coinIcon from '../assets/coin.png'
 
-const PLAN = {
-  name: 'Pro',
-  perks: ['No watermark', '70 coins per month', '3 collab booth sessions / day'],
-  renewDate: 'August 25, 2026',
-  price: '$1.99',
-}
+const FREE_PLAN_NAME = 'Free Plan'
 
-// No backend yet for coin transactions, so new users correctly start with
-// nothing here until purchases are wired up.
-const TRANSACTIONS = []
+const COLLAB_LIMIT = {
+  'Free Plan': 0,
+  'Pro Plan': 3,
+  'Pro Max Plan': '∞',
+}
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -48,6 +46,10 @@ export default function Profile() {
   const [editUsername, setEditUsername] = useState('')
   const [saveError, setSaveError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [planName, setPlanName] = useState(FREE_PLAN_NAME)
+  const [coins, setCoins] = useState(0)
+  const [planRenewDate, setPlanRenewDate] = useState(null)
+  const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
     if (!user) {
@@ -71,6 +73,57 @@ export default function Profile() {
         setStripsLoading(false)
       })
   }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setPlanName(FREE_PLAN_NAME)
+      setCoins(0)
+      setPlanRenewDate(null)
+      setTransactions([])
+      return
+    }
+    supabase
+      .from('profiles')
+      .select('plan, coins, plan_renew_date')
+      .eq('id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load plan info:', error.message)
+          return
+        }
+        setPlanName(data?.plan || FREE_PLAN_NAME)
+        setCoins(data?.coins || 0)
+        setPlanRenewDate(data?.plan_renew_date || null)
+      })
+    supabase
+      .from('coin_transactions')
+      .select('id, title, amount, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load transactions:', error.message)
+        } else {
+          setTransactions(data || [])
+        }
+      })
+  }, [user])
+
+  const handleCancelPlan = async () => {
+    if (!user) return
+    const { error } = await supabase
+      .from('profiles')
+      .update({ plan: FREE_PLAN_NAME, plan_renew_date: null })
+      .eq('id', user.id)
+    if (error) {
+      console.error('Failed to cancel plan:', error.message)
+      return
+    }
+    setPlanName(FREE_PLAN_NAME)
+    setPlanRenewDate(null)
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -121,10 +174,12 @@ export default function Profile() {
     }
   }
 
+  const currentPlan = getPlanByName(planName)
+
   const STATS = [
     { label: 'Photo strips taken', value: strips.length },
-    { label: 'coins remaining', value: 350, icon: coinIcon },
-    { label: 'Collab sessions', value: 3, icon: Users },
+    { label: 'coins remaining', value: coins, icon: coinIcon },
+    { label: 'Collab sessions / day', value: COLLAB_LIMIT[planName] ?? 0, icon: Users },
   ]
 
   const visibleStrips = strips.filter((strip) => {
@@ -174,10 +229,16 @@ export default function Profile() {
                 <h1 className="text-2xl font-extrabold text-dark">{fullName}</h1>
                 {username && <p className="text-gray-500">@{username}</p>}
                 <p className="text-gray-500">{user?.email}</p>
-                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-white text-sm font-semibold px-3 py-1">
-                  <Crown size={14} />
-                  Pro member
-                </span>
+                {planName !== FREE_PLAN_NAME ? (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-white text-sm font-semibold px-3 py-1">
+                    <Crown size={14} />
+                    {planName.replace(' Plan', '')} member
+                  </span>
+                ) : (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-200 text-gray-600 text-sm font-semibold px-3 py-1">
+                    Free member
+                  </span>
+                )}
               </>
             )}
           </div>
@@ -248,30 +309,35 @@ export default function Profile() {
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-extrabold text-white">Current Plan</h2>
               <span className="rounded-full bg-pink-primary text-white text-xs font-semibold px-3 py-1">
-                {PLAN.name}
+                {currentPlan.name}
               </span>
             </div>
             <ul className="mt-3 text-gray-300 space-y-1">
-              {PLAN.perks.map((perk) => (
-                <li key={perk}>{perk}</li>
+              {currentPlan.features.map((feature) => (
+                <li key={feature}>{feature}</li>
               ))}
-              <li>Renew on {PLAN.renewDate}</li>
-              <li>{PLAN.price}</li>
+              {planRenewDate && <li>Renews on {formatDate(planRenewDate)}</li>}
+              <li>{currentPlan.price}{currentPlan.price !== '$0' ? '/month' : ''}</li>
             </ul>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <Link
-              to="/pricing"
-              className="text-center rounded-full bg-pink-primary text-white font-semibold px-6 py-3 hover:opacity-90 transition"
-            >
-              Upgrade to Pro Max
-            </Link>
-            <button
-              type="button"
-              className="rounded-full bg-red-500 text-white font-semibold px-6 py-3 hover:opacity-90 transition"
-            >
-              Cancel Plan
-            </button>
+            {planName !== 'Pro Max Plan' && (
+              <Link
+                to="/pricing"
+                className="text-center rounded-full bg-pink-primary text-white font-semibold px-6 py-3 hover:opacity-90 transition"
+              >
+                {planName === FREE_PLAN_NAME ? 'Upgrade plan' : 'Upgrade to Pro Max'}
+              </Link>
+            )}
+            {planName !== FREE_PLAN_NAME && (
+              <button
+                type="button"
+                onClick={handleCancelPlan}
+                className="rounded-full bg-red-500 text-white font-semibold px-6 py-3 hover:opacity-90 transition"
+              >
+                Cancel Plan
+              </button>
+            )}
           </div>
         </div>
 
@@ -310,10 +376,10 @@ export default function Profile() {
         <div className="mt-10">
           <h2 className="text-xl font-extrabold text-dark">Transaction history</h2>
           <div className="mt-4 space-y-3">
-            {TRANSACTIONS.length === 0 && (
+            {transactions.length === 0 && (
               <p className="text-gray-400 text-sm py-2">No transactions yet — coin purchases will show up here.</p>
             )}
-            {TRANSACTIONS.map((tx) => {
+            {transactions.map((tx) => {
               const earned = tx.amount > 0
               return (
                 <div key={tx.id} className="flex items-center justify-between gap-4 rounded-xl bg-white px-5 py-4">
@@ -327,7 +393,7 @@ export default function Profile() {
                     </div>
                     <div>
                       <p className="font-semibold text-dark">{tx.title}</p>
-                      <p className="text-xs text-gray-400">{tx.date}</p>
+                      <p className="text-xs text-gray-400">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>
                   <span className={`font-semibold flex items-center gap-1 ${earned ? 'text-green-600' : 'text-red-500'}`}>

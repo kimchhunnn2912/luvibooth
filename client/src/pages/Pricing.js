@@ -5,50 +5,32 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import CheckoutModal from '../components/CheckoutModal'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../services/supabaseClient'
+import { PLANS, COIN_PACKS } from '../constants/plans'
 import coinIcon from '../assets/coin.png'
 
 const parsePriceToCents = (price) => Math.round(parseFloat(price.replace('$', '')) * 100)
 
-const PLANS = [
-  {
-    name: 'Free Plan',
-    price: '$0',
-    cta: 'Get Started',
-    features: ['3 photos per day', 'Free frames only', 'Watermark on downloads'],
-  },
-  {
-    name: 'Pro Plan',
-    price: '$1.99',
-    cta: 'Upgrade to Pro',
-    features: [
-      '10 photos per day',
-      'No watermark',
-      'Smart frame recommendation',
-      '3 collab booth sessions / day',
-      '70 coins / month',
-    ],
-  },
-  {
-    name: 'Pro Max Plan',
-    price: '$3.99',
-    cta: 'Upgrade to Pro Max',
-    features: [
-      '30 photos per day',
-      'No watermark',
-      'Smart frame recommendation',
-      'Unlimited collab booth',
-      'Early access to new frames',
-      '160 coins / month',
-    ],
-  },
-]
+const addCoinsAndLog = async (userId, amount, title) => {
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('coins')
+    .eq('id', userId)
+    .single()
+  if (fetchError) throw fetchError
 
-const COIN_PACKS = [
-  { coins: 60, price: '$1.00' },
-  { coins: 200, price: '$3.00' },
-  { coins: 350, price: '$5.00' },
-]
- 
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ coins: (profile?.coins || 0) + amount })
+    .eq('id', userId)
+  if (updateError) throw updateError
+
+  const { error: txError } = await supabase
+    .from('coin_transactions')
+    .insert({ user_id: userId, title, amount })
+  if (txError) throw txError
+}
+
 export default function Pricing() {
   const { hash } = useLocation()
   const { user } = useAuth()
@@ -60,6 +42,24 @@ export default function Pricing() {
     const el = document.querySelector(hash)
     if (el) el.scrollIntoView({ behavior: 'smooth' })
   }, [hash])
+
+  const handlePaid = async (paidItem) => {
+    if (!user) return
+    if (paidItem.type === 'plan') {
+      const renewDate = new Date()
+      renewDate.setMonth(renewDate.getMonth() + 1)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ plan: paidItem.plan.name, plan_renew_date: renewDate.toISOString().slice(0, 10) })
+        .eq('id', user.id)
+      if (error) throw error
+      if (paidItem.plan.coins > 0) {
+        await addCoinsAndLog(user.id, paidItem.plan.coins, `${paidItem.plan.name} monthly coins`)
+      }
+    } else if (paidItem.type === 'coins') {
+      await addCoinsAndLog(user.id, paidItem.pack.coins, `Bought ${paidItem.pack.coins} coins`)
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-white">
@@ -97,6 +97,8 @@ export default function Pricing() {
                 onClick={(e) => {
                   e.stopPropagation()
                   setCheckoutItem({
+                    type: 'plan',
+                    plan,
                     label: plan.name,
                     priceLabel: `${plan.price}/month`,
                     amountCents: parsePriceToCents(plan.price),
@@ -156,6 +158,8 @@ export default function Pricing() {
                   onClick={() =>
                     user
                       ? setCheckoutItem({
+                          type: 'coins',
+                          pack,
                           label: `${pack.coins} coins`,
                           priceLabel: pack.price,
                           amountCents: parsePriceToCents(pack.price),
@@ -175,7 +179,9 @@ export default function Pricing() {
 
       <Footer />
 
-      {checkoutItem && <CheckoutModal item={checkoutItem} onClose={() => setCheckoutItem(null)} />}
+      {checkoutItem && (
+        <CheckoutModal item={checkoutItem} onClose={() => setCheckoutItem(null)} onPaid={() => handlePaid(checkoutItem)} />
+      )}
     </div>
   )
 }

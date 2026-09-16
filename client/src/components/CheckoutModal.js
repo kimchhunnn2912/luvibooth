@@ -49,10 +49,20 @@ function CheckoutForm({ item, onSuccess }) {
   )
 }
 
-export default function CheckoutModal({ item, onClose }) {
+export default function CheckoutModal({ item, onClose, onPaid }) {
   const [clientSecret, setClientSecret] = useState(null)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+
+  const handlePaymentSuccess = async () => {
+    setSuccess(true)
+    if (!onPaid) return
+    try {
+      await onPaid()
+    } catch (err) {
+      console.error('Payment succeeded but recording it failed:', err.message)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -113,7 +123,7 @@ export default function CheckoutModal({ item, onClose }) {
           ) : (
             <div className="mt-6">
               <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm item={item} onSuccess={() => setSuccess(true)} />
+                <CheckoutForm item={item} onSuccess={handlePaymentSuccess} />
               </Elements>
             </div>
           )}
