@@ -3,7 +3,7 @@ import React from 'react'
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { error: null }
+    this.state = { error: null, componentStack: null }
   }
 
   static getDerivedStateFromError(error) {
@@ -12,6 +12,7 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('Luvibooth crashed:', error, info)
+    this.setState({ componentStack: info.componentStack })
   }
 
   render() {
@@ -30,9 +31,14 @@ export default class ErrorBoundary extends React.Component {
             >
               Reload
             </button>
-            <pre className="mt-6 text-left text-[11px] leading-snug text-gray-400 whitespace-pre-wrap break-words bg-gray-50 rounded-lg p-3">
-              {String(this.state.error?.stack || this.state.error?.message || this.state.error)}
+            <pre className="mt-6 text-left text-[11px] leading-snug text-gray-500 whitespace-pre-wrap break-words bg-gray-50 rounded-lg p-3 font-semibold">
+              {String(this.state.error?.name || 'Error')}: {String(this.state.error?.message || this.state.error)}
             </pre>
+            {this.state.componentStack && (
+              <pre className="mt-2 text-left text-[10px] leading-snug text-gray-400 whitespace-pre-wrap break-words bg-gray-50 rounded-lg p-3">
+                {this.state.componentStack}
+              </pre>
+            )}
           </div>
         </div>
       )
