@@ -6,6 +6,7 @@ import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
 import { loadImage, drawStripBase, drawImageCover } from '../utils/frameCanvas'
 import { getTwemojiUrl, getFluentUrl } from '../utils/stickerIcons'
+import { saveOrShareBlob } from '../utils/saveFile'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 
@@ -519,10 +520,9 @@ export default function FrameDesigner() {
       await drawElements(ctx, 1)
     }
 
-    const link = document.createElement('a')
-    link.download = `${frameName.trim() || 'luvibooth-frame'}.png`
-    link.href = exportCanvas.toDataURL('image/png')
-    link.click()
+    const filename = `${frameName.trim() || 'luvibooth-frame'}.png`
+    const blob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'))
+    if (blob) await saveOrShareBlob(blob, filename, 'image/png')
 
     // Also sync the profile's saved preview to this decorated version, so
     // "My recent photo strips" reflects the actual frame, not the raw capture.
@@ -594,13 +594,9 @@ export default function FrameDesigner() {
       await finished
 
       const blob = new Blob(chunks, { type: mimeType })
-      const url = URL.createObjectURL(blob)
       const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
-      const link = document.createElement('a')
-      link.download = `${frameName.trim() || 'luvibooth-boomerang'}.${extension}`
-      link.href = url
-      link.click()
-      URL.revokeObjectURL(url)
+      const filename = `${frameName.trim() || 'luvibooth-boomerang'}.${extension}`
+      await saveOrShareBlob(blob, filename, mimeType)
     } catch (err) {
       window.alert('Could not create the video. Please try again.')
     } finally {

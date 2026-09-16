@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
+import { saveOrShareBlob, dataUrlToBlob } from '../utils/saveFile'
 import coinIcon from '../assets/coin.png'
 
 const PLAN = {
@@ -21,11 +22,11 @@ const TRANSACTIONS = []
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-const handleSaveStrip = (strip) => {
-  const link = document.createElement('a')
-  link.download = `luvibooth-strip-${strip.id}.jpg`
-  link.href = strip.preview || strip.photos?.[0]
-  link.click()
+const handleSaveStrip = async (strip) => {
+  const src = strip.preview || strip.photos?.[0]
+  if (!src) return
+  const blob = await dataUrlToBlob(src)
+  await saveOrShareBlob(blob, `luvibooth-strip-${strip.id}.jpg`, blob.type || 'image/jpeg')
 }
 
 const FILTERS = ['All', 'This month', 'Collaborative']
