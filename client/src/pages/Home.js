@@ -52,9 +52,9 @@ export default function Home() {
       <Navbar />
 
       <section className="bg-gradient-to-br from-pink-100 via-pink-50 to-white">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-16 py-8 md:py-10 grid md:grid-cols-2 gap-8 items-center">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-16 py-8 md:py-10 lg:py-16 grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
           <div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight text-dark">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-dark">
               Your
               <br />
               photobooth,
@@ -63,21 +63,21 @@ export default function Home() {
               <br />
               <span className="text-pink-primary">anytime.</span>
             </h1>
-            <p className="mt-4 md:mt-5 text-gray-500 text-sm md:text-base max-w-xl">
+            <p className="mt-4 md:mt-5 text-gray-500 text-sm md:text-base lg:text-lg max-w-xl lg:max-w-2xl">
               Take fun photos with live filters, design your own frames, and share memories with
               friends, all from your browser.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-6 lg:mt-8 flex flex-wrap gap-3 lg:gap-4">
               <Link
                 to="/photobooth"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-pink-primary text-pink-primary font-semibold text-sm md:text-base px-5 py-2.5 hover:bg-pink-50 transition"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-pink-primary text-pink-primary font-semibold text-sm md:text-base lg:text-lg px-5 py-2.5 lg:px-7 lg:py-3.5 hover:bg-pink-50 transition"
               >
                 <Camera size={18} />
                 Start taking photos
               </Link>
               <Link
                 to="/join"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-pink-primary text-pink-primary font-semibold text-sm md:text-base px-5 py-2.5 hover:bg-pink-50 transition"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-pink-primary text-pink-primary font-semibold text-sm md:text-base lg:text-lg px-5 py-2.5 lg:px-7 lg:py-3.5 hover:bg-pink-50 transition"
               >
                 <Users size={18} />
                 Join a booth
@@ -86,7 +86,11 @@ export default function Home() {
           </div>
 
           <div className="flex justify-center md:justify-end">
-            <img src={homeFrame} alt="Sample frame styles" className="w-full max-w-[280px] md:max-w-sm" />
+            <img
+              src={homeFrame}
+              alt="Sample frame styles"
+              className="w-full max-w-[280px] md:max-w-sm lg:max-w-md xl:max-w-lg"
+            />
           </div>
         </div>
       </section>
