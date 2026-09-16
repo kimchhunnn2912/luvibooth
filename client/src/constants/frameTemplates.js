@@ -4,6 +4,11 @@ import frame3Overlay from '../assets/frame_3.png'
 import frame4Overlay from '../assets/frame_4.png'
 import frame5Overlay from '../assets/frame_5.png'
 import frame6Overlay from '../assets/frame_6.png'
+import frame7Overlay from '../assets/frame_7.png'
+import frame8Overlay from '../assets/frame_8.png'
+import frame10Overlay from '../assets/frame_10.png'
+import frame11Overlay from '../assets/frame_11.png'
+import frame12Overlay from '../assets/frame_12.png'
 
 // Real, pre-designed frame templates. Each "image" template is a transparent
 // PNG (decoration only) laid on top of the user's photos, with `slots`
@@ -109,6 +114,88 @@ export const FRAME_TEMPLATES = [
       { x: 58, y: 177, w: 487, h: 346 },
       { x: 58, y: 715, w: 487, h: 346 },
       { x: 58, y: 1253, w: 487, h: 346 },
+    ],
+  },
+  {
+    id: 'frame-7',
+    name: 'School Memories',
+    badge: 'New',
+    moods: ['pastel', 'warm-bright'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame7Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 34, y: 148, w: 521, h: 555 },
+      { x: 43, y: 691, w: 535, h: 341 },
+      { x: 43, y: 1088, w: 512, h: 511 },
+    ],
+  },
+  {
+    id: 'frame-8',
+    name: 'Gingerbread House',
+    badge: 'Holiday',
+    moods: ['warm-moody', 'warm-bright'],
+    type: 'image',
+    layoutId: 'A',
+    overlay: frame8Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 108, y: 294, w: 384, h: 289 },
+      { x: 108, y: 670, w: 384, h: 289 },
+      { x: 108, y: 1050, w: 384, h: 289 },
+      { x: 108, y: 1428, w: 384, h: 289 },
+    ],
+  },
+  {
+    id: 'frame-9',
+    name: 'Candy Cane Cabin',
+    badge: 'Holiday',
+    moods: ['warm-moody', 'warm-bright'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame10Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 104, y: 176, w: 392, h: 424 },
+      { x: 104, y: 701, w: 392, h: 431 },
+      { x: 104, y: 1233, w: 392, h: 431 },
+    ],
+  },
+  {
+    id: 'frame-10',
+    name: 'Doodle Sparkle',
+    badge: 'On trend',
+    moods: ['pastel', 'warm-bright'],
+    type: 'image',
+    layoutId: 'A',
+    overlay: frame11Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 37, y: 42, w: 530, h: 341 },
+      { x: 37, y: 419, w: 530, h: 342 },
+      { x: 37, y: 797, w: 530, h: 342 },
+      { x: 37, y: 1175, w: 530, h: 342 },
+    ],
+  },
+  {
+    id: 'frame-11',
+    name: 'Racer Star',
+    badge: 'Premium',
+    moods: ['monochrome', 'cool'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame12Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 44, y: 151, w: 511, h: 420 },
+      { x: 44, y: 625, w: 511, h: 420 },
+      { x: 44, y: 1099, w: 511, h: 420 },
     ],
   },
 ]
