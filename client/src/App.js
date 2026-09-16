@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -21,31 +22,33 @@ import FrameRecommendation from './pages/FrameRecommendation'
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/photobooth" element={<Photobooth />} />
-            <Route path="/photobooth/capture" element={<CameraCapture />} />
-            <Route path="/photobooth/design" element={<FrameDesigner />} />
-            <Route path="/photobooth/recommend" element={<FrameRecommendation />} />
-            <Route path="/frame" element={<BrowseFrames />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/join" element={<CollabBooth />} />
-            <Route path="/room/:roomCode" element={<CollabCapture />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/help" element={<HelpCenter />} />
-          </Routes>
-        </div>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/photobooth" element={<Photobooth />} />
+              <Route path="/photobooth/capture" element={<CameraCapture />} />
+              <Route path="/photobooth/design" element={<FrameDesigner />} />
+              <Route path="/photobooth/recommend" element={<FrameRecommendation />} />
+              <Route path="/frame" element={<BrowseFrames />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/join" element={<CollabBooth />} />
+              <Route path="/room/:roomCode" element={<CollabCapture />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/help" element={<HelpCenter />} />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   )
 }
 

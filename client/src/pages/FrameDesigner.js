@@ -175,15 +175,27 @@ export default function FrameDesigner() {
     })
   }, [strokes])
 
+  // Keep the latest redraw function in a ref so resizeCanvas can call it
+  // without depending on `strokes` — otherwise every point drawn mid-stroke
+  // would recreate resizeCanvas, retrigger its effect below, and force a
+  // full canvas.width/height reset (wiping + reallocating the backing
+  // store) dozens of times per second while dragging, which can lock up
+  // or crash the tab on mobile.
+  const redrawCanvasRef = useRef(redrawCanvas)
+  useEffect(() => {
+    redrawCanvasRef.current = redrawCanvas
+  }, [redrawCanvas])
+
   const resizeCanvas = useCallback(() => {
     const canvas = canvasRef.current
     const frame = frameRef.current
     if (!canvas || !frame) return
     const rect = frame.getBoundingClientRect()
+    if (!rect.width || !rect.height) return
     canvas.width = rect.width / zoom
     canvas.height = rect.height / zoom
-    redrawCanvas()
-  }, [zoom, redrawCanvas])
+    redrawCanvasRef.current()
+  }, [zoom])
 
   useEffect(() => {
     resizeCanvas()
