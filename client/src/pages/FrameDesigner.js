@@ -207,14 +207,17 @@ export default function FrameDesigner() {
     redrawCanvas()
   }, [redrawCanvas])
 
-  const getLocalPoint = (e) => {
-    const frame = frameRef.current
-    const rect = frame.getBoundingClientRect()
-    return {
-      x: (e.clientX - rect.left) / zoom,
-      y: (e.clientY - rect.top) / zoom,
-    }
-  }
+  const getLocalPoint = useCallback(
+    (e) => {
+      const frame = frameRef.current
+      const rect = frame.getBoundingClientRect()
+      return {
+        x: (e.clientX - rect.left) / zoom,
+        y: (e.clientY - rect.top) / zoom,
+      }
+    },
+    [zoom]
+  )
 
   const handleAddSticker = (sticker) => {
     const newEl = { id: nextId(), type: 'sticker', emoji: sticker.emoji, slug: sticker.slug, x: 45, y: 40, size: 44 }
@@ -256,59 +259,90 @@ export default function FrameDesigner() {
     setSelectedId(el.id)
     const point = getLocalPoint(e)
     dragRef.current = { id: el.id, offsetX: point.x - el.x, offsetY: point.y - el.y }
-    window.addEventListener('pointermove', handleElementPointerMove)
-    window.addEventListener('pointerup', handleElementPointerUp)
   }
 
-  const handleElementPointerMove = (e) => {
+  const handleElementPointerMove = useCallback(
+    (e) => {
+      if (!dragRef.current) return
+      const point = getLocalPoint(e)
+      const { id, offsetX, offsetY } = dragRef.current
+      setElements((prev) =>
+        prev.map((el) => (el.id === id ? { ...el, x: point.x - offsetX, y: point.y - offsetY } : el))
+      )
+    },
+    [getLocalPoint]
+  )
+
+  const endElementDrag = useCallback(() => {
     if (!dragRef.current) return
-    const point = getLocalPoint(e)
-    const { id, offsetX, offsetY } = dragRef.current
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, x: point.x - offsetX, y: point.y - offsetY } : el))
-    )
-  }
-
-  const handleElementPointerUp = () => {
     dragRef.current = null
-    window.removeEventListener('pointermove', handleElementPointerMove)
-    window.removeEventListener('pointerup', handleElementPointerUp)
     setElements((current) => {
       pushHistory(current, strokes)
       return current
     })
-  }
+  }, [strokes, pushHistory])
+
+  // A stroke or a drag can end via 'pointerup' OR 'pointercancel' (common on
+  // mobile when the OS intercepts a gesture, e.g. a second finger touching
+  // down). Previously these listeners were added/removed per-stroke and only
+  // listened for 'pointerup', so a cancelled touch left stale listeners
+  // attached; starting a second stroke then raced two sets of listeners
+  // against the same ref, nulling it out from under an in-flight read and
+  // crashing with "null is not an object (evaluating '...points')".
+  // Registering one stable pair for the component's whole lifetime avoids
+  // that entirely.
+  useEffect(() => {
+    window.addEventListener('pointermove', handleElementPointerMove)
+    window.addEventListener('pointerup', endElementDrag)
+    window.addEventListener('pointercancel', endElementDrag)
+    return () => {
+      window.removeEventListener('pointermove', handleElementPointerMove)
+      window.removeEventListener('pointerup', endElementDrag)
+      window.removeEventListener('pointercancel', endElementDrag)
+    }
+  }, [handleElementPointerMove, endElementDrag])
 
   const handleCanvasPointerDown = (e) => {
     if (activeTool !== 'draw') return
     const point = getLocalPoint(e)
     strokeRef.current = { color: activeColor, size: brushSize, points: [point] }
     setStrokes((prev) => [...prev, strokeRef.current])
-    window.addEventListener('pointermove', handleCanvasPointerMove)
-    window.addEventListener('pointerup', handleCanvasPointerUp)
   }
 
-  const handleCanvasPointerMove = (e) => {
-    if (!strokeRef.current) return
-    const point = getLocalPoint(e)
-    strokeRef.current.points.push(point)
-    setStrokes((prev) => {
-      const next = [...prev]
-      next[next.length - 1] = { ...strokeRef.current, points: [...strokeRef.current.points] }
-      return next
-    })
-  }
+  const handleCanvasPointerMove = useCallback(
+    (e) => {
+      if (!strokeRef.current) return
+      const point = getLocalPoint(e)
+      strokeRef.current.points.push(point)
+      setStrokes((prev) => {
+        if (!strokeRef.current || prev.length === 0) return prev
+        const next = [...prev]
+        next[next.length - 1] = { ...strokeRef.current, points: [...strokeRef.current.points] }
+        return next
+      })
+    },
+    [getLocalPoint]
+  )
 
-  const handleCanvasPointerUp = () => {
+  const endStroke = useCallback(() => {
     if (!strokeRef.current) return
     strokeRef.current = null
-    window.removeEventListener('pointermove', handleCanvasPointerMove)
-    window.removeEventListener('pointerup', handleCanvasPointerUp)
     setStrokes((current) => {
       pushHistory(elements, current)
       return current
     })
-  }
+  }, [elements, pushHistory])
+
+  useEffect(() => {
+    window.addEventListener('pointermove', handleCanvasPointerMove)
+    window.addEventListener('pointerup', endStroke)
+    window.addEventListener('pointercancel', endStroke)
+    return () => {
+      window.removeEventListener('pointermove', handleCanvasPointerMove)
+      window.removeEventListener('pointerup', endStroke)
+      window.removeEventListener('pointercancel', endStroke)
+    }
+  }, [handleCanvasPointerMove, endStroke])
 
   const handleUndo = () => {
     if (historyIndex === 0) return
@@ -357,8 +391,6 @@ export default function FrameDesigner() {
     if (e.touches.length !== 2) return
     e.stopPropagation()
     dragRef.current = null
-    window.removeEventListener('pointermove', handleElementPointerMove)
-    window.removeEventListener('pointerup', handleElementPointerUp)
     setSelectedId(el.id)
     pinchRef.current = {
       type: 'element',
@@ -375,8 +407,6 @@ export default function FrameDesigner() {
   const handleFrameTouchStart = (e) => {
     if (e.touches.length !== 2) return
     dragRef.current = null
-    window.removeEventListener('pointermove', handleElementPointerMove)
-    window.removeEventListener('pointerup', handleElementPointerUp)
     pinchRef.current = { type: 'canvas', startDist: getTouchDistance(e.touches), startValue: zoom }
     window.addEventListener('touchmove', handlePinchMove, { passive: false })
     window.addEventListener('touchend', handlePinchEnd)
