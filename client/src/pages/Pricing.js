@@ -127,6 +127,13 @@ export default function Pricing() {
                   <span className="text-sm font-medium text-gray-400 ml-1">coins</span>
                 </p>
                 <p className="mt-2 text-gray-500">{pack.price}</p>
+                <button
+                  type="button"
+                  onClick={() => window.alert('Coin purchases are coming soon!')}
+                  className="mt-5 w-full rounded-full bg-pink-primary text-white font-semibold py-2.5 hover:opacity-90 transition"
+                >
+                  Buy now
+                </button>
               </div>
             ))}
           </div>
