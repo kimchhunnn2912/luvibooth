@@ -53,6 +53,7 @@ export default function CheckoutModal({ item, onClose, onPaid }) {
   const [clientSecret, setClientSecret] = useState(null)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [waking, setWaking] = useState(false)
 
   const handlePaymentSuccess = async () => {
     setSuccess(true)
@@ -64,22 +65,40 @@ export default function CheckoutModal({ item, onClose, onPaid }) {
     }
   }
 
+  // The free-tier backend spins down after inactivity and can fail or hang
+  // on its very first request for up to ~50s while it wakes back up. Retry
+  // a few times with a short delay instead of surfacing a scary error on
+  // the first attempt, which would otherwise happen on almost every cold
+  // demo (e.g. an advisor opening the site fresh).
   useEffect(() => {
     let cancelled = false
-    fetch(`${SERVER_URL}/create-payment-intent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amountCents: item.amountCents, description: item.description }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const maxAttempts = 8
+    const retryDelayMs = 6000
+
+    const attemptFetch = async (attempt) => {
+      if (cancelled) return
+      setWaking(attempt > 1)
+      try {
+        const res = await fetch(`${SERVER_URL}/create-payment-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amountCents: item.amountCents, description: item.description }),
+        })
+        const data = await res.json()
         if (cancelled) return
         if (data.error) setError(data.error)
         else setClientSecret(data.clientSecret)
-      })
-      .catch(() => {
-        if (!cancelled) setError('Could not reach the payment server.')
-      })
+      } catch (err) {
+        if (cancelled) return
+        if (attempt < maxAttempts) {
+          setTimeout(() => attemptFetch(attempt + 1), retryDelayMs)
+        } else {
+          setError('Could not reach the payment server. Please try again in a moment.')
+        }
+      }
+    }
+
+    attemptFetch(1)
     return () => {
       cancelled = true
     }
@@ -119,7 +138,11 @@ export default function CheckoutModal({ item, onClose, onPaid }) {
           ) : error && !clientSecret ? (
             <p className="mt-6 text-sm text-red-500">{error}</p>
           ) : !clientSecret ? (
-            <p className="mt-6 text-sm text-gray-400">Loading payment form…</p>
+            <p className="mt-6 text-sm text-gray-400">
+              {waking
+                ? "Waking up the payment server… this can take up to a minute after inactivity."
+                : 'Loading payment form…'}
+            </p>
           ) : (
             <div className="mt-6">
               <Elements stripe={stripePromise} options={{ clientSecret }}>
