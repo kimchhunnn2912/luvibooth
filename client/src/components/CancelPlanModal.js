@@ -29,7 +29,7 @@ export default function CancelPlanModal({ planName, planRenewDate, features, for
         </ul>
 
         <p className="mt-3 text-xs text-gray-400">
-          💡 You won't be charged again after cancelling. Any unused coins will remain in your account.
+          You won't be charged again after cancelling. Any unused coins will remain in your account.
         </p>
 
         <div className="mt-4 space-y-2">
