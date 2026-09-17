@@ -49,6 +49,7 @@ export default function Profile() {
   const [planName, setPlanName] = useState(FREE_PLAN_NAME)
   const [coins, setCoins] = useState(0)
   const [planRenewDate, setPlanRenewDate] = useState(null)
+  const [planCancelled, setPlanCancelled] = useState(false)
   const [transactions, setTransactions] = useState([])
 
   useEffect(() => {
@@ -79,12 +80,13 @@ export default function Profile() {
       setPlanName(FREE_PLAN_NAME)
       setCoins(0)
       setPlanRenewDate(null)
+      setPlanCancelled(false)
       setTransactions([])
       return
     }
     supabase
       .from('profiles')
-      .select('plan, coins, plan_renew_date')
+      .select('plan, coins, plan_renew_date, plan_cancelled')
       .eq('id', user.id)
       .single()
       .then(({ data, error }) => {
@@ -95,6 +97,7 @@ export default function Profile() {
         setPlanName(data?.plan || FREE_PLAN_NAME)
         setCoins(data?.coins || 0)
         setPlanRenewDate(data?.plan_renew_date || null)
+        setPlanCancelled(data?.plan_cancelled || false)
       })
     supabase
       .from('coin_transactions')
@@ -111,18 +114,21 @@ export default function Profile() {
       })
   }, [user])
 
+  // Cancelling only stops future auto-renewal — the paid month was already
+  // bought, so the member keeps their plan's perks until plan_renew_date
+  // passes. Nothing about `plan`/`plan_renew_date` changes here; only
+  // isExpired (derived below) actually downgrades what's displayed.
   const handleCancelPlan = async () => {
     if (!user) return
     const { error } = await supabase
       .from('profiles')
-      .update({ plan: FREE_PLAN_NAME, plan_renew_date: null })
+      .update({ plan_cancelled: true })
       .eq('id', user.id)
     if (error) {
       console.error('Failed to cancel plan:', error.message)
       return
     }
-    setPlanName(FREE_PLAN_NAME)
-    setPlanRenewDate(null)
+    setPlanCancelled(true)
   }
 
   const handleLogout = async () => {
@@ -174,12 +180,14 @@ export default function Profile() {
     }
   }
 
-  const currentPlan = getPlanByName(planName)
+  const isExpired = Boolean(planRenewDate) && new Date(planRenewDate) < new Date()
+  const effectivePlanName = isExpired ? FREE_PLAN_NAME : planName
+  const currentPlan = getPlanByName(effectivePlanName)
 
   const STATS = [
     { label: 'Photo strips taken', value: strips.length },
     { label: 'coins remaining', value: coins, icon: coinIcon },
-    { label: 'Collab sessions / day', value: COLLAB_LIMIT[planName] ?? 0, icon: Users },
+    { label: 'Collab sessions / day', value: COLLAB_LIMIT[effectivePlanName] ?? 0, icon: Users },
   ]
 
   const visibleStrips = strips.filter((strip) => {
@@ -229,10 +237,10 @@ export default function Profile() {
                 <h1 className="text-2xl font-extrabold text-dark">{fullName}</h1>
                 {username && <p className="text-gray-500">@{username}</p>}
                 <p className="text-gray-500">{user?.email}</p>
-                {planName !== FREE_PLAN_NAME ? (
+                {effectivePlanName !== FREE_PLAN_NAME ? (
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-400 text-white text-sm font-semibold px-3 py-1">
                     <Crown size={14} />
-                    {planName.replace(' Plan', '')} member
+                    {effectivePlanName.replace(' Plan', '')} member
                   </span>
                 ) : (
                   <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-200 text-gray-600 text-sm font-semibold px-3 py-1">
@@ -316,20 +324,26 @@ export default function Profile() {
               {currentPlan.features.map((feature) => (
                 <li key={feature}>{feature}</li>
               ))}
-              {planRenewDate && <li>Renews on {formatDate(planRenewDate)}</li>}
+              {!isExpired && planRenewDate && (
+                <li>
+                  {planCancelled
+                    ? `Access until ${formatDate(planRenewDate)} (auto-renew off)`
+                    : `Renews on ${formatDate(planRenewDate)}`}
+                </li>
+              )}
               <li>{currentPlan.price}{currentPlan.price !== '$0' ? '/month' : ''}</li>
             </ul>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            {planName !== 'Pro Max Plan' && (
+            {effectivePlanName !== 'Pro Max Plan' && (
               <Link
                 to="/pricing"
                 className="text-center rounded-full bg-pink-primary text-white font-semibold px-6 py-3 hover:opacity-90 transition"
               >
-                {planName === FREE_PLAN_NAME ? 'Upgrade plan' : 'Upgrade to Pro Max'}
+                {effectivePlanName === FREE_PLAN_NAME ? 'Upgrade plan' : 'Upgrade to Pro Max'}
               </Link>
             )}
-            {planName !== FREE_PLAN_NAME && (
+            {effectivePlanName !== FREE_PLAN_NAME && !planCancelled && (
               <button
                 type="button"
                 onClick={handleCancelPlan}

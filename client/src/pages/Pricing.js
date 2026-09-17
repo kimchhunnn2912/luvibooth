@@ -50,7 +50,11 @@ export default function Pricing() {
       renewDate.setMonth(renewDate.getMonth() + 1)
       const { error } = await supabase
         .from('profiles')
-        .update({ plan: paidItem.plan.name, plan_renew_date: renewDate.toISOString().slice(0, 10) })
+        .update({
+          plan: paidItem.plan.name,
+          plan_renew_date: renewDate.toISOString().slice(0, 10),
+          plan_cancelled: false,
+        })
         .eq('id', user.id)
       if (error) throw error
       if (paidItem.plan.coins > 0) {
