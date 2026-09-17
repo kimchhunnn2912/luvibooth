@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Camera, ChevronDown, ArrowRight, Sparkles, Upload } from 'lucide-react'
+import { Camera, ChevronDown, ArrowRight, Upload } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
@@ -542,7 +542,7 @@ export default function CameraCapture() {
               onClick={() => navigate('/photobooth/recommend', { state: { layoutId, photos } })}
               className="mt-3 inline-flex items-center gap-2 rounded-full bg-pink-primary text-white font-semibold px-6 py-2.5 hover:opacity-90 transition"
             >
-              Smart Frame Recommendation <Sparkles size={18} />
+              Smart Frame Recommendation
             </button>
           </div>
         )}
