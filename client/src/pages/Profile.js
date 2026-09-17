@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { saveOrShareBlob, dataUrlToBlob } from '../utils/saveFile'
 import { getPlanByName } from '../constants/plans'
+import CancelPlanModal from '../components/CancelPlanModal'
 import coinIcon from '../assets/coin.png'
 
 const FREE_PLAN_NAME = 'Free Plan'
@@ -51,6 +52,7 @@ export default function Profile() {
   const [planRenewDate, setPlanRenewDate] = useState(null)
   const [planCancelled, setPlanCancelled] = useState(false)
   const [transactions, setTransactions] = useState([])
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -118,14 +120,9 @@ export default function Profile() {
   // bought, so the member keeps their plan's perks until plan_renew_date
   // passes. Nothing about `plan`/`plan_renew_date` changes here; only
   // isExpired (derived below) actually downgrades what's displayed.
-  const handleCancelPlan = async () => {
+  const handleConfirmCancelPlan = async () => {
     if (!user) return
-    const confirmed = window.confirm(
-      planRenewDate
-        ? `Cancel auto-renew? You'll keep your ${planName} perks until ${formatDate(planRenewDate)}, then it will switch to Free.`
-        : `Cancel auto-renew for your ${planName}?`
-    )
-    if (!confirmed) return
+    setShowCancelModal(false)
     const { error } = await supabase
       .from('profiles')
       .update({ plan_cancelled: true })
@@ -352,7 +349,7 @@ export default function Profile() {
             {effectivePlanName !== FREE_PLAN_NAME && !planCancelled && (
               <button
                 type="button"
-                onClick={handleCancelPlan}
+                onClick={() => setShowCancelModal(true)}
                 className="rounded-full bg-red-500 text-white font-semibold px-6 py-3 hover:opacity-90 transition"
               >
                 Cancel Plan
@@ -428,6 +425,17 @@ export default function Profile() {
       </section>
 
       <Footer />
+
+      {showCancelModal && (
+        <CancelPlanModal
+          planName={effectivePlanName}
+          planRenewDate={planRenewDate}
+          features={currentPlan.features}
+          formatDate={formatDate}
+          onKeep={() => setShowCancelModal(false)}
+          onConfirm={handleConfirmCancelPlan}
+        />
+      )}
     </div>
   )
 }
