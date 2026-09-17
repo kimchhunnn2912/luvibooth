@@ -58,7 +58,7 @@ export default function Pricing() {
         .eq('id', user.id)
       if (error) throw error
       if (paidItem.plan.coins > 0) {
-        await addCoinsAndLog(user.id, paidItem.plan.coins, `${paidItem.plan.name} monthly coins`)
+        await addCoinsAndLog(user.id, paidItem.plan.coins, `${paidItem.plan.name} subscription bonus`)
       }
     } else if (paidItem.type === 'coins') {
       await addCoinsAndLog(user.id, paidItem.pack.coins, `Bought ${paidItem.pack.coins} coins`)
