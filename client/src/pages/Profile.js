@@ -120,6 +120,12 @@ export default function Profile() {
   // isExpired (derived below) actually downgrades what's displayed.
   const handleCancelPlan = async () => {
     if (!user) return
+    const confirmed = window.confirm(
+      planRenewDate
+        ? `Cancel auto-renew? You'll keep your ${planName} perks until ${formatDate(planRenewDate)}, then it will switch to Free.`
+        : `Cancel auto-renew for your ${planName}?`
+    )
+    if (!confirmed) return
     const { error } = await supabase
       .from('profiles')
       .update({ plan_cancelled: true })
