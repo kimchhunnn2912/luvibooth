@@ -1,13 +1,17 @@
+const isMobileDevice = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+
 // iOS Safari does not reliably honor the `download` attribute on links
 // pointing at data: URLs or blob: URLs — instead of saving the file, it
 // often just opens the image in a preview with nothing saved, which is why
 // "Download" silently does nothing useful on iPhones. The Web Share API's
 // file sharing lets the user explicitly "Save Image" / "Save to Files" from
 // the native share sheet, which is the reliable way to get a file onto a
-// phone from a web page. We use it when available and fall back to the
-// classic anchor-download approach (which works fine on desktop browsers).
+// phone from a web page. Desktop Chrome/Edge also implement navigator.share,
+// but there the plain anchor-download already works fine and is what users
+// expect (a share sheet is a confusing detour), so only prefer Share on
+// actual mobile devices and fall back to anchor-download everywhere else.
 export async function saveOrShareBlob(blob, filename, mimeType) {
-  if (navigator.canShare && navigator.share) {
+  if (isMobileDevice() && navigator.canShare && navigator.share) {
     try {
       const file = new File([blob], filename, { type: mimeType })
       if (navigator.canShare({ files: [file] })) {
