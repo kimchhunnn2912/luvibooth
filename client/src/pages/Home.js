@@ -52,7 +52,7 @@ export default function Home() {
       <Navbar />
 
       <section className="bg-gradient-to-br from-pink-100 via-pink-50 to-white">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-16 pt-8 md:pt-10 lg:pt-10 pb-4 md:pb-6 lg:pb-6 grid md:grid-cols-2 gap-8 lg:gap-16 items-start">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-16 pt-8 md:pt-10 lg:pt-10 pb-4 md:pb-6 lg:pb-6 grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
           <div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight text-dark">
               Your
