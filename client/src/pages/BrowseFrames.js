@@ -39,7 +39,7 @@ export default function BrowseFrames() {
     <div className="min-h-dvh bg-white">
       <Navbar />
 
-      <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-10 text-center">
+      <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-10 pb-28 text-center">
         <h1 className="text-4xl font-extrabold text-dark">Browse Frames</h1>
         <p className="mt-3 text-gray-500">
           Explore free and premium frames designed by Luvibooth.
@@ -131,15 +131,21 @@ export default function BrowseFrames() {
           })}
         </div>
 
+      </section>
+
+      <div
+        className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100 px-6 flex justify-center"
+        style={{ paddingTop: '1rem', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         <button
           type="button"
           disabled={!selectedTemplate}
           onClick={handleContinue}
-          className="mt-10 rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full max-w-xs rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {selectedTemplate ? `Continue with ${selectedTemplate.name}` : 'Select a frame to continue'}
         </button>
-      </section>
+      </div>
 
       <Footer />
     </div>
