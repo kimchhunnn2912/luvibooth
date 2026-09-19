@@ -58,7 +58,7 @@ export default function ContactUs() {
         </p>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 md:px-16 py-16">
+      <section className="max-w-3xl mx-auto px-6 md:px-16 pt-24 pb-16">
         <div className="grid sm:grid-cols-2 gap-6">
           <div className="flex items-center gap-4 rounded-2xl border border-gray-100 p-5">
             <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
