@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LifeBuoy, ChevronDown, Mail } from 'lucide-react'
+import { ChevronDown, Mail } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
@@ -55,11 +55,7 @@ export default function HelpCenter() {
       <Navbar />
 
       <section className="bg-pink-50 text-center py-16 px-6">
-        <span className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-white text-pink-primary text-sm font-medium px-4 py-1.5">
-          <LifeBuoy size={16} />
-          We're here to help
-        </span>
-        <h1 className="mt-6 text-4xl md:text-5xl font-extrabold text-dark">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
           Help <span className="text-pink-primary">Center</span>
         </h1>
         <p className="mt-4 text-gray-500 max-w-xl mx-auto">
