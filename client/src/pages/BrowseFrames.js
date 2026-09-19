@@ -7,11 +7,12 @@ import { FRAME_TEMPLATES } from '../constants/frameTemplates'
 import { getFluentUrl, getTwemojiUrl } from '../utils/stickerIcons'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
+import { Check } from 'lucide-react'
 import coinIcon from '../assets/coin.png'
 
 const TEMPLATES = FRAME_TEMPLATES
 
-const FILTERS = ['All', 'Free', 'Premium', 'New', 'On trend']
+const FILTERS = ['All', 'My Frames', 'Free', 'Premium', 'New', 'On trend']
 
 const badgeClasses = {
   Free: 'bg-white text-dark',
@@ -76,11 +77,15 @@ export default function BrowseFrames() {
       })
   }, [user])
 
-  const visibleTemplates = TEMPLATES.filter((t) => filter === 'All' || t.badge === filter)
-  const selectedTemplate = TEMPLATES.find((t) => t.id === selectedId) || null
-
   const priceFor = (t) => badgePrices[t.badge] ?? 0
   const isOwned = (t) => t.badge === 'Free' || unlockedIds.has(t.id)
+
+  const visibleTemplates = TEMPLATES.filter((t) => {
+    if (filter === 'All') return true
+    if (filter === 'My Frames') return isOwned(t)
+    return t.badge === filter
+  })
+  const selectedTemplate = TEMPLATES.find((t) => t.id === selectedId) || null
 
   const handleContinue = async () => {
     if (!selectedTemplate || unlocking) return
@@ -172,7 +177,13 @@ export default function BrowseFrames() {
         </div>
 
         {visibleTemplates.length === 0 && (
-          <p className="mt-16 text-gray-400">No frames yet — check back soon!</p>
+          <p className="mt-16 text-gray-400">
+            {filter === 'My Frames'
+              ? !user
+                ? 'Log in to see the frames you\'ve unlocked.'
+                : "You haven't unlocked any premium frames yet — free frames don't need unlocking."
+              : 'No frames yet — check back soon!'}
+          </p>
         )}
 
         <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -198,11 +209,18 @@ export default function BrowseFrames() {
                     >
                       {t.badge}
                     </span>
-                    {!owned && (
+                    {!owned ? (
                       <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
                         <img src={coinIcon} alt="" className="w-3 h-3" />
                         {priceFor(t)}
                       </span>
+                    ) : (
+                      t.badge !== 'Free' && (
+                        <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-green-500 text-white text-[10px] font-bold px-2 py-1">
+                          <Check size={10} strokeWidth={3} />
+                          Owned
+                        </span>
+                      )
                     )}
                     <img
                       src={t.overlay}
@@ -222,11 +240,18 @@ export default function BrowseFrames() {
                     >
                       {t.badge}
                     </span>
-                    {!owned && (
+                    {!owned ? (
                       <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
                         <img src={coinIcon} alt="" className="w-3 h-3" />
                         {priceFor(t)}
                       </span>
+                    ) : (
+                      t.badge !== 'Free' && (
+                        <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-green-500 text-white text-[10px] font-bold px-2 py-1">
+                          <Check size={10} strokeWidth={3} />
+                          Owned
+                        </span>
+                      )
                     )}
 
                     {t.stickers.map((s, i) => (
