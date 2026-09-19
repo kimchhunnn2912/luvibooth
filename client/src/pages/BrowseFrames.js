@@ -133,19 +133,15 @@ export default function BrowseFrames() {
 
       </section>
 
-      <div
-        className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100 px-6 flex justify-center"
-        style={{ paddingTop: '1rem', paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      <button
+        type="button"
+        disabled={!selectedTemplate}
+        onClick={handleContinue}
+        className="fixed left-1/2 -translate-x-1/2 z-40 rounded-full bg-pink-primary text-white font-semibold px-8 py-3 shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
       >
-        <button
-          type="button"
-          disabled={!selectedTemplate}
-          onClick={handleContinue}
-          className="w-full max-w-xs rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {selectedTemplate ? `Continue with ${selectedTemplate.name}` : 'Select a frame to continue'}
-        </button>
-      </div>
+        {selectedTemplate ? `Continue with ${selectedTemplate.name}` : 'Select a frame to continue'}
+      </button>
 
       <Footer />
     </div>
