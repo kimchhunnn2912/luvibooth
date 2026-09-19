@@ -89,7 +89,7 @@ export default function Home() {
             <img
               src={homeFrame}
               alt="Sample frame styles"
-              className="w-full max-w-[240px] md:max-w-[280px] lg:max-w-sm xl:max-w-md"
+              className="w-full max-w-[240px] md:max-w-[280px] lg:max-w-sm xl:max-w-md animate-float"
             />
           </div>
         </div>
