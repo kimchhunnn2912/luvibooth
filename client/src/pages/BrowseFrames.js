@@ -15,6 +15,7 @@ const badgeClasses = {
   Premium: 'bg-amber-400 text-white',
   New: 'bg-pink-primary text-white',
   'On trend': 'bg-violet-500 text-white',
+  Holiday: 'bg-red-500 text-white',
 }
 
 const pillClasses = (active) =>
