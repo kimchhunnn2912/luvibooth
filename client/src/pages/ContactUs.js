@@ -59,29 +59,7 @@ export default function ContactUs() {
       </section>
 
       <section className="max-w-3xl mx-auto px-6 md:px-16 pt-24 pb-16">
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div className="flex items-center gap-4 rounded-2xl border border-gray-100 p-5">
-            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
-              <Mail size={20} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Email us at</p>
-              <p className="font-semibold text-dark">luvibooth127@gmail.com</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 rounded-2xl border border-gray-100 p-5">
-            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
-              <Phone size={20} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Call us at</p>
-              <p className="font-semibold text-dark">+855 123 456 789</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-12">
+        <div>
           <h2 className="text-2xl font-extrabold text-dark">Send us a message</h2>
           <p className="mt-1 text-gray-500">We'll get back to you as soon as possible!!</p>
 
@@ -164,6 +142,28 @@ export default function ContactUs() {
               {loading ? 'Sending…' : 'Send message'}
             </button>
           </form>
+        </div>
+
+        <div className="mt-12 grid sm:grid-cols-2 gap-6">
+          <div className="flex items-center gap-4 rounded-2xl border border-gray-100 p-5">
+            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
+              <Mail size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Email us at</p>
+              <p className="font-semibold text-dark">luvibooth127@gmail.com</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 rounded-2xl border border-gray-100 p-5">
+            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
+              <Phone size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Call us at</p>
+              <p className="font-semibold text-dark">+855 123 456 789</p>
+            </div>
+          </div>
         </div>
       </section>
 
