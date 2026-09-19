@@ -25,10 +25,10 @@ const badgeClasses = {
 // permanently, per user (tracked in the unlocked_frames table).
 const badgePrices = {
   Free: 0,
-  New: 40,
-  'On trend': 60,
-  Holiday: 80,
-  Premium: 100,
+  New: 30,
+  'On trend': 40,
+  Holiday: 50,
+  Premium: 70,
 }
 
 const pillClasses = (active) =>
