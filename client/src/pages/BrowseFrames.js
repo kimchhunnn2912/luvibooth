@@ -204,11 +204,13 @@ export default function BrowseFrames() {
                       isSelected ? 'ring-4 ring-pink-primary' : ''
                     }`}
                   >
-                    <span
-                      className={`absolute top-1.5 left-1.5 z-10 rounded-full text-[10px] font-bold px-2 py-1 ${badgeClasses[t.badge]}`}
-                    >
-                      {t.badge}
-                    </span>
+                    {(!owned || t.badge === 'Free') && (
+                      <span
+                        className={`absolute top-1.5 left-1.5 z-10 rounded-full text-[10px] font-bold px-2 py-1 ${badgeClasses[t.badge]}`}
+                      >
+                        {t.badge}
+                      </span>
+                    )}
                     {!owned ? (
                       <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
                         <img src={coinIcon} alt="" className="w-3 h-3" />
@@ -235,11 +237,13 @@ export default function BrowseFrames() {
                     className={`relative rounded-2xl p-2 transition ${isSelected ? 'ring-4 ring-pink-primary' : ''}`}
                     style={{ backgroundColor: t.borderColor }}
                   >
-                    <span
-                      className={`absolute top-1.5 left-1.5 z-10 rounded-full text-[10px] font-bold px-2 py-1 ${badgeClasses[t.badge]}`}
-                    >
-                      {t.badge}
-                    </span>
+                    {(!owned || t.badge === 'Free') && (
+                      <span
+                        className={`absolute top-1.5 left-1.5 z-10 rounded-full text-[10px] font-bold px-2 py-1 ${badgeClasses[t.badge]}`}
+                      >
+                        {t.badge}
+                      </span>
+                    )}
                     {!owned ? (
                       <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
                         <img src={coinIcon} alt="" className="w-3 h-3" />
