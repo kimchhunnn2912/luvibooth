@@ -58,7 +58,7 @@ export default function ContactUs() {
         </p>
       </section>
 
-      <section className="max-w-3xl mx-auto px-6 md:px-16 pt-24 pb-16">
+      <section className="max-w-3xl mx-auto px-6 md:px-16 py-12">
         <div>
           <h2 className="text-2xl font-extrabold text-dark">Send us a message</h2>
           <p className="mt-1 text-gray-500">We'll get back to you as soon as possible!!</p>
