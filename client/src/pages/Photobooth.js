@@ -24,7 +24,9 @@ export default function Photobooth() {
       <Navbar />
 
       <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-8 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">Choose your favorite layout</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
+          Choose your favorite <span className="text-pink-primary">layout</span>
+        </h1>
         <p className="mt-2 text-gray-500 max-w-2xl mx-auto">
           Select a layout for your photo session. You can choose from different styles.
         </p>

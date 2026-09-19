@@ -48,7 +48,9 @@ export default function FrameRecommendation() {
       <Navbar />
 
       <section className="max-w-[1200px] mx-auto px-6 md:px-16 py-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">Smart Frame Recommendation</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
+          Smart Frame <span className="text-pink-primary">Recommendation</span>
+        </h1>
         <p className="mt-4 text-pink-700 text-lg max-w-xl mx-auto">
           We will analyzed your photo and found the best matching frames for you!
         </p>

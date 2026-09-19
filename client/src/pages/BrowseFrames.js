@@ -40,7 +40,9 @@ export default function BrowseFrames() {
       <Navbar />
 
       <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-10 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">Browse Frames</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
+          Browse <span className="text-pink-primary">Frames</span>
+        </h1>
         <p className="mt-3 text-gray-500">
           Explore free and premium frames designed by Luvibooth.
           <br />

@@ -85,7 +85,9 @@ export default function CollabBooth() {
       <Navbar />
 
       <section className="max-w-[1000px] mx-auto px-6 md:px-10 py-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">Collaborative Booth</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
+          Collaborative <span className="text-pink-primary">Booth</span>
+        </h1>
         <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
           Take photos together with your friends remotely or create a room or join one using a room code.
         </p>
