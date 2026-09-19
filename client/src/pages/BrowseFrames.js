@@ -1,10 +1,13 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
 import { FRAME_TEMPLATES } from '../constants/frameTemplates'
 import { getFluentUrl, getTwemojiUrl } from '../utils/stickerIcons'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../services/supabaseClient'
+import coinIcon from '../assets/coin.png'
 
 const TEMPLATES = FRAME_TEMPLATES
 
@@ -18,6 +21,16 @@ const badgeClasses = {
   Holiday: 'bg-red-500 text-white',
 }
 
+// Free frames stay free; every other badge tier costs coins to unlock once,
+// permanently, per user (tracked in the unlocked_frames table).
+const badgePrices = {
+  Free: 0,
+  New: 40,
+  'On trend': 60,
+  Holiday: 80,
+  Premium: 100,
+}
+
 const pillClasses = (active) =>
   `rounded-full px-4 py-2 text-sm font-semibold border-2 transition ${
     active ? 'bg-pink-primary text-white border-pink-primary' : 'bg-white text-dark border-gray-200 hover:border-pink-200'
@@ -25,15 +38,108 @@ const pillClasses = (active) =>
 
 export default function BrowseFrames() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [filter, setFilter] = useState('All')
   const [selectedId, setSelectedId] = useState(null)
+  const [coins, setCoins] = useState(0)
+  const [unlockedIds, setUnlockedIds] = useState(new Set())
+  const [unlocking, setUnlocking] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setCoins(0)
+      setUnlockedIds(new Set())
+      return
+    }
+    supabase
+      .from('profiles')
+      .select('coins')
+      .eq('id', user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load coin balance:', error.message)
+        } else {
+          setCoins(data?.coins || 0)
+        }
+      })
+    supabase
+      .from('unlocked_frames')
+      .select('frame_id')
+      .eq('user_id', user.id)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load unlocked frames:', error.message)
+        } else {
+          setUnlockedIds(new Set((data || []).map((r) => r.frame_id)))
+        }
+      })
+  }, [user])
 
   const visibleTemplates = TEMPLATES.filter((t) => filter === 'All' || t.badge === filter)
   const selectedTemplate = TEMPLATES.find((t) => t.id === selectedId) || null
 
-  const handleContinue = () => {
-    if (!selectedTemplate) return
-    navigate('/photobooth', { state: { template: selectedTemplate } })
+  const priceFor = (t) => badgePrices[t.badge] ?? 0
+  const isOwned = (t) => t.badge === 'Free' || unlockedIds.has(t.id)
+
+  const handleContinue = async () => {
+    if (!selectedTemplate || unlocking) return
+
+    if (isOwned(selectedTemplate)) {
+      navigate('/photobooth', { state: { template: selectedTemplate } })
+      return
+    }
+
+    if (!user) {
+      window.alert('Please log in to unlock this frame.')
+      navigate('/login')
+      return
+    }
+
+    const price = priceFor(selectedTemplate)
+    if (coins < price) {
+      window.alert(
+        `You need ${price} coins to unlock this frame, but you only have ${coins}. Let's get you more coins.`
+      )
+      navigate('/pricing#buy-coin')
+      return
+    }
+
+    setUnlocking(true)
+    try {
+      const { error: unlockError } = await supabase
+        .from('unlocked_frames')
+        .insert({ user_id: user.id, frame_id: selectedTemplate.id })
+      if (unlockError) throw unlockError
+
+      const newCoins = coins - price
+      const { error: coinsError } = await supabase
+        .from('profiles')
+        .update({ coins: newCoins })
+        .eq('id', user.id)
+      if (coinsError) throw coinsError
+
+      const { error: txError } = await supabase
+        .from('coin_transactions')
+        .insert({ user_id: user.id, title: `Unlocked ${selectedTemplate.name} frame`, amount: -price })
+      if (txError) throw txError
+
+      setCoins(newCoins)
+      setUnlockedIds((prev) => new Set(prev).add(selectedTemplate.id))
+      navigate('/photobooth', { state: { template: selectedTemplate } })
+    } catch (err) {
+      console.error('Failed to unlock frame:', err.message)
+      window.alert('Could not unlock this frame right now. Please try again.')
+    } finally {
+      setUnlocking(false)
+    }
+  }
+
+  const continueLabel = () => {
+    if (!selectedTemplate) return 'Select a frame to continue'
+    if (unlocking) return 'Unlocking…'
+    if (isOwned(selectedTemplate)) return `Continue with ${selectedTemplate.name}`
+    return `Unlock for ${priceFor(selectedTemplate)} coins`
   }
 
   return (
@@ -49,6 +155,13 @@ export default function BrowseFrames() {
           <br />
           Unlock with coins or design your own!!
         </p>
+
+        {user && (
+          <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-gray-500">
+            <img src={coinIcon} alt="" className="w-4 h-4" />
+            {coins} coins available
+          </p>
+        )}
 
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           {FILTERS.map((f) => (
@@ -66,6 +179,7 @@ export default function BrowseFrames() {
           {visibleTemplates.map((t) => {
             const layout = LAYOUTS.find((l) => l.id === t.layoutId) || LAYOUTS[0]
             const isSelected = selectedId === t.id
+            const owned = isOwned(t)
             return (
               <button
                 key={t.id}
@@ -84,11 +198,17 @@ export default function BrowseFrames() {
                     >
                       {t.badge}
                     </span>
+                    {!owned && (
+                      <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
+                        <img src={coinIcon} alt="" className="w-3 h-3" />
+                        {priceFor(t)}
+                      </span>
+                    )}
                     <img
                       src={t.overlay}
                       alt=""
                       draggable={false}
-                      className="w-full h-auto transition group-hover:scale-105"
+                      className={`w-full h-auto transition group-hover:scale-105 ${!owned ? 'opacity-80' : ''}`}
                       style={{ aspectRatio: `${t.canvasWidth} / ${t.canvasHeight}` }}
                     />
                   </div>
@@ -102,6 +222,12 @@ export default function BrowseFrames() {
                     >
                       {t.badge}
                     </span>
+                    {!owned && (
+                      <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
+                        <img src={coinIcon} alt="" className="w-3 h-3" />
+                        {priceFor(t)}
+                      </span>
+                    )}
 
                     {t.stickers.map((s, i) => (
                       <img
@@ -135,16 +261,16 @@ export default function BrowseFrames() {
         </div>
 
         <div
-          className="sticky z-40 flex justify-center py-4"
+          className="sticky z-40 flex flex-col items-center gap-2 py-4"
           style={{ bottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <button
             type="button"
-            disabled={!selectedTemplate}
+            disabled={!selectedTemplate || unlocking}
             onClick={handleContinue}
             className="rounded-full bg-pink-primary text-white font-semibold px-8 py-3 shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {selectedTemplate ? `Continue with ${selectedTemplate.name}` : 'Select a frame to continue'}
+            {continueLabel()}
           </button>
         </div>
       </section>
