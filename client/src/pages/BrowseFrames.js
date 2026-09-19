@@ -84,7 +84,7 @@ export default function BrowseFrames() {
     if (filter === 'All') return true
     if (filter === 'My Frames') return isOwned(t)
     return t.badge === filter
-  })
+  }).sort((a, b) => (isOwned(a) === isOwned(b) ? 0 : isOwned(a) ? -1 : 1))
   const selectedTemplate = TEMPLATES.find((t) => t.id === selectedId) || null
 
   const handleContinue = async () => {
