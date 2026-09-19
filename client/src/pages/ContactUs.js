@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { MessageCircleQuestion, Mail, Phone, Send, MapPin, Clock, Instagram, Facebook, MessageCircle } from 'lucide-react'
+import { MessageCircleQuestion, Mail, Phone, Send, MapPin, Clock, Camera, Globe, MessageCircle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { supabase } from '../services/supabaseClient'
@@ -105,27 +105,27 @@ export default function ContactUs() {
           <div>
             <p className="text-sm font-semibold text-dark">Follow us</p>
             <div className="mt-3 flex gap-3">
-              <a
-                href="#"
+              <button
+                type="button"
                 aria-label="Instagram"
                 className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
               >
-                <Instagram size={20} />
-              </a>
-              <a
-                href="#"
+                <Camera size={20} />
+              </button>
+              <button
+                type="button"
                 aria-label="Facebook"
                 className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
               >
-                <Facebook size={20} />
-              </a>
-              <a
-                href="#"
+                <Globe size={20} />
+              </button>
+              <button
+                type="button"
                 aria-label="Telegram"
                 className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
               >
                 <MessageCircle size={20} />
-              </a>
+              </button>
             </div>
           </div>
         </div>
