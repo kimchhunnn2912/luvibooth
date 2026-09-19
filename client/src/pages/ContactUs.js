@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { MessageCircleQuestion, Mail, Phone, Send } from 'lucide-react'
+import { MessageCircleQuestion, Mail, Phone, Send, MapPin, Clock, Instagram, Facebook, MessageCircle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { supabase } from '../services/supabaseClient'
@@ -59,7 +59,7 @@ export default function ContactUs() {
       </section>
 
       <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-16 grid md:grid-cols-2 gap-16">
-        <div className="flex flex-col justify-center gap-6">
+        <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
               <Mail size={20} />
@@ -77,6 +77,55 @@ export default function ContactUs() {
             <div>
               <p className="text-sm text-gray-500">Call us at</p>
               <p className="font-semibold text-dark">+855 123 456 789</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
+              <MapPin size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Based in</p>
+              <p className="font-semibold text-dark">Phnom Penh, Cambodia</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary flex-shrink-0">
+              <Clock size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Support hours</p>
+              <p className="font-semibold text-dark">Mon–Sat, 9am–6pm</p>
+            </div>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          <div>
+            <p className="text-sm font-semibold text-dark">Follow us</p>
+            <div className="mt-3 flex gap-3">
+              <a
+                href="#"
+                aria-label="Instagram"
+                className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
+              >
+                <Instagram size={20} />
+              </a>
+              <a
+                href="#"
+                aria-label="Facebook"
+                className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
+              >
+                <Facebook size={20} />
+              </a>
+              <a
+                href="#"
+                aria-label="Telegram"
+                className="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center text-pink-primary hover:bg-pink-100 transition"
+              >
+                <MessageCircle size={20} />
+              </a>
             </div>
           </div>
         </div>
