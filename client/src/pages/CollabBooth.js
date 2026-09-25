@@ -111,7 +111,7 @@ export default function CollabBooth() {
 
         {roomCode ? (
           <div className="mt-14 rounded-3xl bg-pink-50 p-8 md:p-12">
-            <h2 className="text-xl md:text-2xl font-bold text-dark">
+            <h2 className="text-xl md:text-2xl font-bold text-pink-primary">
               Room created!! Share this code with your friend
             </h2>
 
