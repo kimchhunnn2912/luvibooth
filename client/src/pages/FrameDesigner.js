@@ -702,7 +702,7 @@ export default function FrameDesigner() {
             </div>
           )}
 
-          {(activeTool === 'draw' || activeTool === 'color' || selectedElement?.type === 'text') && (
+          {(activeTool === 'draw' || selectedElement?.type === 'text') && (
             <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
               <h2 className="text-lg font-semibold text-gray-500">{activeTool === 'draw' ? 'Brush Colors' : 'Colors'}</h2>
               {selectedElement?.type === 'text' ? (
@@ -863,49 +863,57 @@ export default function FrameDesigner() {
             />
           </div>
 
-          {!isImageFrame && (
+          {activeTool === 'color' && (
+            <>
+              <hr className="border-gray-200" />
+
+              {isImageFrame ? (
+                <p className="text-sm text-gray-400">This frame's border is part of its design and can't be changed.</p>
+              ) : (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-500">Border colors</h2>
+                  <div className="mt-3 grid grid-cols-5 gap-2">
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setBorderColor(c)}
+                        style={{ backgroundColor: c }}
+                        className={`w-9 h-9 rounded-full border-2 transition ${
+                          borderColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTool === 'text' && (
             <>
               <hr className="border-gray-200" />
 
               <div>
-                <h2 className="text-lg font-semibold text-gray-500">Border colors</h2>
-                <div className="mt-3 grid grid-cols-5 gap-2">
-                  {COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setBorderColor(c)}
-                      style={{ backgroundColor: c }}
-                      className={`w-9 h-9 rounded-full border-2 transition ${
-                        borderColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <h2 className="text-lg font-semibold text-gray-500">Add text</h2>
+                <input
+                  type="text"
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddText()}
+                  placeholder="Type something..."
+                  className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddText}
+                  className="mt-3 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
+                >
+                  Add text
+                </button>
               </div>
             </>
           )}
-
-          <hr className="border-gray-200" />
-
-          <div>
-            <h2 className="text-lg font-semibold text-gray-500">Add text</h2>
-            <input
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddText()}
-              placeholder="Type something..."
-              className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
-            />
-            <button
-              type="button"
-              onClick={handleAddText}
-              className="mt-3 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
-            >
-              Add text
-            </button>
-          </div>
 
           <hr className="border-gray-200" />
 
