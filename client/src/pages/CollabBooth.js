@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Users, Copy, Check } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
@@ -19,10 +20,12 @@ const cardButtonClasses =
 export default function CollabBooth() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [roomCode, setRoomCode] = useState(null)
   const [copied, setCopied] = useState(false)
   const [joinInput, setJoinInput] = useState('')
   const [joinError, setJoinError] = useState('')
+  const autoJoinedRef = useRef(false)
 
   const displayName =
     user?.user_metadata?.first_name ||
@@ -52,6 +55,20 @@ export default function CollabBooth() {
       socket.off('room-full', handleRoomFull)
     }
   }, [roomCode, navigate, displayName])
+
+  // Lets a QR code (or any shared link) encode ?code=XXXXXX so scanning it
+  // joins the room immediately instead of requiring the code to be typed in.
+  useEffect(() => {
+    const codeFromLink = searchParams.get('code')
+    if (!codeFromLink || autoJoinedRef.current) return
+    autoJoinedRef.current = true
+    const code = codeFromLink.trim().toUpperCase()
+    setJoinInput(code)
+    setJoinError('')
+    if (!socket.connected) socket.connect()
+    socket.emit('join-room', { roomCode: code, name: displayName })
+    navigate(`/room/${code}`, { state: { isHost: false, displayName } })
+  }, [searchParams, displayName, navigate])
 
   const handleCreateRoom = () => {
     const code = generateRoomCode()
@@ -98,9 +115,22 @@ export default function CollabBooth() {
               Room created!! Share this code with your friend
             </h2>
 
-            <div className="mt-6 rounded-2xl bg-white py-10 px-6">
-              <p className="text-4xl md:text-6xl font-extrabold tracking-[0.2em] text-pink-primary">{roomCode}</p>
-              <p className="mt-3 text-pink-200">Share this code with your friend!</p>
+            <div className="mt-6 rounded-2xl bg-white py-10 px-6 flex flex-col md:flex-row items-center justify-center gap-8">
+              <div>
+                <p className="text-4xl md:text-6xl font-extrabold tracking-[0.2em] text-pink-primary">{roomCode}</p>
+                <p className="mt-3 text-gray-400">Share this code with your friend!</p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="rounded-2xl border-2 border-pink-100 p-3">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/join?code=${roomCode}`}
+                    size={140}
+                    fgColor="#1f2937"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-400">Or scan to join instantly</p>
+              </div>
             </div>
 
             <button
