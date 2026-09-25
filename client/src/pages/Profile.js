@@ -21,8 +21,17 @@ const COLLAB_LIMIT = {
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
+// The gallery list only ever renders `preview` (a small compressed
+// thumbnail), so the list query deliberately excludes the much larger raw
+// `photos` array. On the rare strip that has no preview, fetch just that
+// one row's photos on demand instead of loading them for every strip up
+// front.
 const handleSaveStrip = async (strip) => {
-  const src = strip.preview || strip.photos?.[0]
+  let src = strip.preview
+  if (!src) {
+    const { data } = await supabase.from('photo_strips').select('photos').eq('id', strip.id).single()
+    src = data?.photos?.[0]
+  }
   if (!src) return
   const blob = await dataUrlToBlob(src)
   await saveOrShareBlob(blob, `luvibooth-strip-${strip.id}.jpg`, blob.type || 'image/jpeg')
@@ -63,7 +72,7 @@ export default function Profile() {
     setStripsLoading(true)
     supabase
       .from('photo_strips')
-      .select('id, layout_id, photos, preview, collaborative, created_at')
+      .select('id, layout_id, preview, collaborative, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20)
