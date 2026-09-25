@@ -412,7 +412,7 @@ export default function Profile() {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-white ${
-                        earned ? 'bg-green-500' : 'bg-pink-primary'
+                        earned ? 'bg-dark' : 'bg-pink-primary'
                       }`}
                     >
                       {earned ? <Plus size={16} /> : <Minus size={16} />}
@@ -422,7 +422,7 @@ export default function Profile() {
                       <p className="text-xs text-gray-400">{formatDate(tx.created_at)}</p>
                     </div>
                   </div>
-                  <span className={`font-semibold flex items-center gap-1 ${earned ? 'text-green-600' : 'text-pink-primary'}`}>
+                  <span className={`font-semibold flex items-center gap-1 ${earned ? 'text-dark' : 'text-pink-primary'}`}>
                     {earned ? '+' : ''}
                     {tx.amount} coins
                   </span>
