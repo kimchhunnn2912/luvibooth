@@ -111,7 +111,7 @@ export default function CollabBooth() {
 
         {roomCode ? (
           <div className="mt-14 rounded-3xl bg-pink-50 p-8 md:p-12">
-            <h2 className="text-xl md:text-2xl font-bold text-pink-600">
+            <h2 className="text-xl md:text-2xl font-bold text-dark">
               Room created!! Share this code with your friend
             </h2>
 
@@ -126,7 +126,7 @@ export default function CollabBooth() {
                   <QRCodeSVG
                     value={`${window.location.origin}/join?code=${roomCode}`}
                     size={140}
-                    fgColor="#1f2937"
+                    fgColor="#FD9BB1"
                   />
                 </div>
                 <p className="mt-2 text-xs text-gray-400">Or scan to join instantly</p>
