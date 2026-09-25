@@ -702,7 +702,7 @@ export default function FrameDesigner() {
             </div>
           )}
 
-          {(activeTool === 'draw' || selectedElement?.type === 'text') && (
+          {(activeTool === 'draw' || (selectedElement?.type === 'text' && activeTool !== 'text')) && (
             <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
               <h2 className="text-lg font-semibold text-gray-500">{activeTool === 'draw' ? 'Brush Colors' : 'Colors'}</h2>
               {selectedElement?.type === 'text' ? (
@@ -904,10 +904,28 @@ export default function FrameDesigner() {
                   placeholder="Type something..."
                   className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
                 />
+
+                <p className="mt-4 text-xs text-gray-400">
+                  {selectedElement?.type === 'text' ? 'Tap a color to recolor the selected text' : 'Pick a color for your text'}
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => handleColorSelect(c)}
+                      style={{ backgroundColor: c }}
+                      className={`w-9 h-9 rounded-full border-2 transition ${
+                        activeColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
+                      }`}
+                    />
+                  ))}
+                </div>
+
                 <button
                   type="button"
                   onClick={handleAddText}
-                  className="mt-3 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
+                  className="mt-4 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
                 >
                   Add text
                 </button>
