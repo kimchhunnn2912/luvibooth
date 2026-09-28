@@ -6,11 +6,10 @@ import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { saveOrShareBlob, dataUrlToBlob } from '../utils/saveFile'
-import { getPlanByName } from '../constants/plans'
+import { getPlanByName, FREE_PLAN_NAME } from '../constants/plans'
+import { useUserPlan } from '../hooks/useUserPlan'
 import CancelPlanModal from '../components/CancelPlanModal'
 import coinIcon from '../assets/coin.png'
-
-const FREE_PLAN_NAME = 'Free Plan'
 
 const COLLAB_LIMIT = {
   'Free Plan': 0,
@@ -46,6 +45,8 @@ const pillClasses = (active) =>
 
 export default function Profile() {
   const { user, logout, updateProfile } = useAuth()
+  const { effectivePlanName, isExpired, coins, planRenewDate, planCancelled, setPlanCancelled } =
+    useUserPlan()
   const navigate = useNavigate()
   const [filter, setFilter] = useState('All')
   const [strips, setStrips] = useState([])
@@ -56,10 +57,6 @@ export default function Profile() {
   const [editUsername, setEditUsername] = useState('')
   const [saveError, setSaveError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [planName, setPlanName] = useState(FREE_PLAN_NAME)
-  const [coins, setCoins] = useState(0)
-  const [planRenewDate, setPlanRenewDate] = useState(null)
-  const [planCancelled, setPlanCancelled] = useState(false)
   const [transactions, setTransactions] = useState([])
   const [showCancelModal, setShowCancelModal] = useState(false)
 
@@ -88,28 +85,9 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) {
-      setPlanName(FREE_PLAN_NAME)
-      setCoins(0)
-      setPlanRenewDate(null)
-      setPlanCancelled(false)
       setTransactions([])
       return
     }
-    supabase
-      .from('profiles')
-      .select('plan, coins, plan_renew_date, plan_cancelled')
-      .eq('id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Failed to load plan info:', error.message)
-          return
-        }
-        setPlanName(data?.plan || FREE_PLAN_NAME)
-        setCoins(data?.coins || 0)
-        setPlanRenewDate(data?.plan_renew_date || null)
-        setPlanCancelled(data?.plan_cancelled || false)
-      })
     supabase
       .from('coin_transactions')
       .select('id, title, amount, created_at')
@@ -192,8 +170,6 @@ export default function Profile() {
     }
   }
 
-  const isExpired = Boolean(planRenewDate) && new Date(planRenewDate) < new Date()
-  const effectivePlanName = isExpired ? FREE_PLAN_NAME : planName
   const currentPlan = getPlanByName(effectivePlanName)
 
   const STATS = [

@@ -9,6 +9,8 @@ import { getTwemojiUrl, getFluentUrl } from '../utils/stickerIcons'
 import { saveOrShareBlob } from '../utils/saveFile'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
+import { useUserPlan } from '../hooks/useUserPlan'
+import { FREE_PLAN_NAME } from '../constants/plans'
 
 const TOOLS = [
   { id: 'sticker', label: 'Sticker', icon: Smile },
@@ -98,6 +100,27 @@ const buildBoomerangSequence = (count) => {
   return [...forward, ...backward]
 }
 
+// Reset the transform first so this draws in real device pixels regardless
+// of any ctx.scale() the caller applied earlier (the color+sticker export
+// path scales up 3x before drawing everything else).
+const drawWatermark = (ctx, canvasWidth, canvasHeight) => {
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  const fontSize = Math.max(16, canvasWidth * 0.035)
+  ctx.font = `bold ${fontSize}px sans-serif`
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'bottom'
+  ctx.lineWidth = fontSize * 0.08
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)'
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+  const text = 'Luvibooth'
+  const x = canvasWidth - fontSize * 0.6
+  const y = canvasHeight - fontSize * 0.6
+  ctx.strokeText(text, x, y)
+  ctx.fillText(text, x, y)
+  ctx.restore()
+}
+
 const toolButtonClasses = (active) =>
   `flex flex-col items-center justify-center gap-0.5 w-16 h-12 rounded-xl border-2 text-xs font-medium transition ${
     active ? 'border-pink-primary text-pink-primary bg-pink-50' : 'border-gray-200 text-gray-500 hover:border-pink-200'
@@ -107,6 +130,8 @@ export default function FrameDesigner() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { effectivePlanName } = useUserPlan()
+  const hasWatermark = effectivePlanName === FREE_PLAN_NAME
   const layoutId = location.state?.layoutId || 'A'
   const capturedPhotos = location.state?.photos || []
   const template = location.state?.template || null
@@ -520,6 +545,10 @@ export default function FrameDesigner() {
       await drawElements(ctx, 1)
     }
 
+    if (hasWatermark) {
+      drawWatermark(ctx, exportCanvas.width, exportCanvas.height)
+    }
+
     const filename = `${frameName.trim() || 'luvibooth-frame'}.png`
     const blob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'))
     if (blob) await saveOrShareBlob(blob, filename, 'image/png')
@@ -562,6 +591,7 @@ export default function FrameDesigner() {
       canvas.height = height
       const ctx = canvas.getContext('2d')
       ctx.drawImage(images[0], 0, 0, width, height)
+      if (hasWatermark) drawWatermark(ctx, width, height)
 
       const stream = canvas.captureStream(15)
       const recorder = new MediaRecorder(stream, { mimeType })
@@ -584,6 +614,7 @@ export default function FrameDesigner() {
       const interval = setInterval(() => {
         const img = images[sequence[step % sequence.length]]
         ctx.drawImage(img, 0, 0, width, height)
+        if (hasWatermark) drawWatermark(ctx, width, height)
         step += 1
         if (step >= totalSteps) {
           clearInterval(interval)

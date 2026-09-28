@@ -46,3 +46,5 @@ export const COIN_PACKS = [
 ]
 
 export const getPlanByName = (name) => PLANS.find((p) => p.name === name) || PLANS[0]
+
+export const FREE_PLAN_NAME = PLANS[0].name
