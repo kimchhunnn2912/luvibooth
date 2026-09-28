@@ -186,6 +186,18 @@ export default function CollabCapture() {
     [delay, layout.boxes, photos.length, filter]
   )
 
+  // Keep the latest runCaptureSequence in a ref so the capture-start
+  // listener below always calls the current version without needing to be
+  // in that effect's dependency array — otherwise every captured photo
+  // (which changes photos.length, one of runCaptureSequence's own deps)
+  // would tear down and rebuild the whole listener effect, including the
+  // WebRTC signal handler, risking a dropped ICE candidate or offer/answer
+  // if one arrived in that gap.
+  const runCaptureSequenceRef = useRef(runCaptureSequence)
+  useEffect(() => {
+    runCaptureSequenceRef.current = runCaptureSequence
+  }, [runCaptureSequence])
+
   // Signaling + presence listeners.
   useEffect(() => {
     if (!roomCode) return
@@ -218,7 +230,7 @@ export default function CollabCapture() {
     }
 
     const handleCaptureStart = ({ delay: d }) => {
-      runCaptureSequence(d)
+      runCaptureSequenceRef.current(d)
     }
 
     socket.on('room-users', handleRoomUsers)
@@ -230,7 +242,7 @@ export default function CollabCapture() {
       socket.off('webrtc-signal', handleSignal)
       socket.off('capture-start', handleCaptureStart)
     }
-  }, [roomCode, isHost, createPeerConnection, runCaptureSequence])
+  }, [roomCode, isHost, createPeerConnection])
 
   // Once both the room has 2 people AND our own camera is ready — whichever
   // finishes last — the host creates the WebRTC offer. Guarding on
@@ -388,6 +400,11 @@ export default function CollabCapture() {
                 />
                 {!friendConnected && (
                   <p className="text-white text-base px-6 text-center">Waiting for your friend to join…</p>
+                )}
+                {countdown && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-white text-6xl font-extrabold">{countdown}</span>
+                  </div>
                 )}
               </div>
             </div>
