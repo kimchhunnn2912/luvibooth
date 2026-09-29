@@ -1,69 +1,25 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import CheckoutModal from '../components/CheckoutModal'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../services/supabaseClient'
 import { PLANS, COIN_PACKS } from '../constants/plans'
 import coinIcon from '../assets/coin.png'
 
-const parsePriceToCents = (price) => Math.round(parseFloat(price.replace('$', '')) * 100)
-
-const addCoinsAndLog = async (userId, amount, title) => {
-  const { data: profile, error: fetchError } = await supabase
-    .from('profiles')
-    .select('coins')
-    .eq('id', userId)
-    .single()
-  if (fetchError) throw fetchError
-
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ coins: (profile?.coins || 0) + amount })
-    .eq('id', userId)
-  if (updateError) throw updateError
-
-  const { error: txError } = await supabase
-    .from('coin_transactions')
-    .insert({ user_id: userId, title, amount })
-  if (txError) throw txError
-}
+const parsePriceToUsd = (price) => parseFloat(price.replace('$', ''))
 
 export default function Pricing() {
   const { hash } = useLocation()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [selectedPlan, setSelectedPlan] = useState(null)
-  const [checkoutItem, setCheckoutItem] = useState(null)
 
   useEffect(() => {
     if (!hash) return
     const el = document.querySelector(hash)
     if (el) el.scrollIntoView({ behavior: 'smooth' })
   }, [hash])
-
-  const handlePaid = async (paidItem) => {
-    if (!user) return
-    if (paidItem.type === 'plan') {
-      const renewDate = new Date()
-      renewDate.setMonth(renewDate.getMonth() + 1)
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          plan: paidItem.plan.name,
-          plan_renew_date: renewDate.toISOString().slice(0, 10),
-          plan_cancelled: false,
-        })
-        .eq('id', user.id)
-      if (error) throw error
-      if (paidItem.plan.coins > 0) {
-        await addCoinsAndLog(user.id, paidItem.plan.coins, `${paidItem.plan.name} subscription bonus`)
-      }
-    } else if (paidItem.type === 'coins') {
-      await addCoinsAndLog(user.id, paidItem.pack.coins, `Bought ${paidItem.pack.coins} coins`)
-    }
-  }
 
   return (
     <div className="min-h-dvh bg-white">
@@ -102,13 +58,18 @@ export default function Pricing() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setCheckoutItem({
-                    type: 'plan',
-                    plan,
-                    label: plan.name,
-                    priceLabel: `${plan.price}/month`,
-                    amountCents: parsePriceToCents(plan.price),
-                    description: `${plan.name} subscription`,
+                  navigate('/checkout', {
+                    state: {
+                      item: {
+                        type: 'plan',
+                        label: plan.name,
+                        priceLabel: `${plan.price}/month`,
+                        amount: parsePriceToUsd(plan.price),
+                        description: `${plan.name} subscription`,
+                        planName: plan.name,
+                        coinAmount: plan.coins || 0,
+                      },
+                    },
                   })
                 }}
                 className="mt-6 block w-full rounded-full bg-pink-primary text-white font-semibold py-3 hover:opacity-90 transition"
@@ -163,13 +124,17 @@ export default function Pricing() {
                   type="button"
                   onClick={() =>
                     user
-                      ? setCheckoutItem({
-                          type: 'coins',
-                          pack,
-                          label: `${pack.coins} coins`,
-                          priceLabel: pack.price,
-                          amountCents: parsePriceToCents(pack.price),
-                          description: `${pack.coins} Luvibooth coins`,
+                      ? navigate('/checkout', {
+                          state: {
+                            item: {
+                              type: 'coins',
+                              label: `${pack.coins} coins`,
+                              priceLabel: pack.price,
+                              amount: parsePriceToUsd(pack.price),
+                              description: `${pack.coins} Luvibooth coins`,
+                              coinAmount: pack.coins,
+                            },
+                          },
                         })
                       : window.alert('Please log in first to buy coins.')
                   }
@@ -184,10 +149,6 @@ export default function Pricing() {
       </section>
 
       <Footer />
-
-      {checkoutItem && (
-        <CheckoutModal item={checkoutItem} onClose={() => setCheckoutItem(null)} onPaid={() => handlePaid(checkoutItem)} />
-      )}
     </div>
   )
 }

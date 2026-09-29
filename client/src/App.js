@@ -8,6 +8,7 @@ import Signup from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 import ContactUs from './pages/ContactUs'
 import Pricing from './pages/Pricing'
+import Checkout from './pages/Checkout'
 import Photobooth from './pages/Photobooth'
 import CameraCapture from './pages/CameraCapture'
 import FrameDesigner from './pages/FrameDesigner'
@@ -37,6 +38,7 @@ function App() {
               <Route path="/photobooth/recommend" element={<FrameRecommendation />} />
               <Route path="/frame" element={<BrowseFrames />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/join" element={<CollabBooth />} />

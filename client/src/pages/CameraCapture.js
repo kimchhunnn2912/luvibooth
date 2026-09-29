@@ -592,7 +592,7 @@ export default function CameraCapture() {
                 className="flex-1 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold py-2.5 hover:bg-gray-50 transition"
               >
                 Cancel
-              </button>
+              </button> 
               <button
                 type="button"
                 onClick={handleConfirmCrop}
