@@ -78,7 +78,7 @@ export default function Pricing() {
               </button>
             ) : (
               <Link
-                to="/signup"
+                to={user ? '/photobooth' : '/signup'}
                 onClick={(e) => e.stopPropagation()}
                 className="mt-6 block rounded-full bg-pink-primary text-white font-semibold py-3 hover:opacity-90 transition"
               >
