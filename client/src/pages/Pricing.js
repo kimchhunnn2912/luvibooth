@@ -27,7 +27,7 @@ export default function Pricing() {
 
       <section className="max-w-5xl mx-auto px-6 md:px-10 pt-16 pb-4 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
-          Choose Your Perfect <span className="text-pink-primary">Plan</span>
+          Choose Your <span className="text-pink-primary">Perfect Plan</span>
         </h1>
         <p className="mt-4 text-gray-500 max-w-2xl mx-auto">
           Upgrade to enjoy ad-free photo booth experience and unlock premium features

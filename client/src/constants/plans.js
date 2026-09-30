@@ -19,7 +19,7 @@ export const PLANS = [
       '10 photos per day',
       'No watermark',
       'Smart frame recommendation',
-      '3 collab booth sessions / day',
+      '6 collab booth sessions / day',
       '70 coins / month',
     ],
   },
