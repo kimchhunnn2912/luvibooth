@@ -148,7 +148,7 @@ export default function CollabBooth() {
               </div>
               <div className="w-16 h-16 rounded-full border-2 border-dashed border-pink-200" />
             </div>
-            <p className="mt-4 text-pink-600">Waiting for a friend to join...</p>
+            <p className="mt-4 text-gray-500">Waiting for a friend to join...</p>
             <button
               type="button"
               onClick={handleCreateRoom}
