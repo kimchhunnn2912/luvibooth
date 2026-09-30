@@ -123,7 +123,7 @@ export default function Home() {
           <div className="mt-14 grid md:grid-cols-3 gap-12">
             {STEPS.map(({ step, title, description }, i) => (
               <div key={step} className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-pink-primary text-white text-xl font-bold flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-pink-primary text-white text-xl font-bold leading-none flex items-center justify-center">
                   {i + 1}
                 </div>
                 <span className="mt-3 text-sm font-semibold text-pink-primary tracking-wide">
