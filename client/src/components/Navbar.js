@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CircleUserRound, Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import luviLogoIcon from '../assets/luvilogo_icon.png'
+import luviLogoFull from '../assets/luvilogo.png'
 import coinIcon from '../assets/coin.png'
 
 const NAV_LINKS = [
@@ -30,12 +30,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between px-6 md:px-16 py-4">
-        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-          <img src={luviLogoIcon} alt="Luvibooth" className="h-7 sm:h-9 w-auto" />
-          <span className="hidden sm:inline text-lg sm:text-xl font-extrabold whitespace-nowrap">
-            <span className="text-pink-primary">Luvi</span>
-            <span className="text-dark">booth</span>
-          </span>
+        <Link to="/" className="flex items-center flex-shrink-0">
+          <img src={luviLogoFull} alt="Luvibooth" className="h-10 sm:h-12 w-auto" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
