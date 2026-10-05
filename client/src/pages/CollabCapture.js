@@ -15,11 +15,18 @@ const DELAYS = [3, 5, 10]
 
 const FILTERS = [
   { id: 'normal', label: 'Normal', css: 'none' },
+  { id: 'bw', label: 'B&W', css: 'grayscale(1) contrast(1.05)' },
   { id: 'blur', label: 'Blur', css: 'blur(2px)' },
+  { id: 'cool', label: 'Cool', css: 'saturate(1.1) contrast(1.05) brightness(1.05) hue-rotate(-12deg)' },
+  { id: 'dreamy', label: 'Dreamy', css: 'brightness(1.12) contrast(0.9) saturate(1.15) blur(0.5px)' },
+  { id: 'fade', label: 'Fade', css: 'contrast(0.85) saturate(0.55) brightness(1.08)' },
+  { id: 'noir', label: 'Noir', css: 'grayscale(1) contrast(1.35) brightness(0.9)' },
+  { id: 'sepia', label: 'Sepia', css: 'sepia(0.8) contrast(1.05) brightness(1.02)' },
+  { id: 'sharp', label: 'Sharp', css: 'contrast(1.3) saturate(1.1)' },
+  { id: 'soft', label: 'Soft', css: 'brightness(1.08) contrast(0.85) saturate(0.9)' },
+  { id: 'vintage', label: 'Vintage', css: 'sepia(0.4) contrast(0.9) brightness(0.95) saturate(0.75)' },
   { id: 'vivid', label: 'Vivid', css: 'saturate(1.6) contrast(1.15)' },
   { id: 'warm', label: 'Warm', css: 'sepia(0.3) saturate(1.3) brightness(1.05)' },
-  { id: 'cool', label: 'Cool', css: 'saturate(1.1) contrast(1.05) brightness(1.05) hue-rotate(-12deg)' },
-  { id: 'vintage', label: 'Vintage', css: 'sepia(0.4) contrast(0.9) brightness(0.95) saturate(0.75)' },
 ]
 
 const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }

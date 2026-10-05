@@ -706,33 +706,6 @@ export default function FrameDesigner() {
         </div>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-8 justify-center">
-          {activeTool === 'sticker' && (
-            <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
-              <h2 className="text-lg font-semibold text-gray-500">Stickers</h2>
-              <div className="mt-3 grid grid-cols-5 sm:grid-cols-4 gap-1.5">
-                {STICKERS.map((sticker, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => handleAddSticker(sticker)}
-                    className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
-                  >
-                    <img
-                      src={getFluentUrl(sticker.slug)}
-                      alt={sticker.slug}
-                      className="w-full h-full object-contain"
-                      draggable={false}
-                      onError={(e) => {
-                        e.target.onerror = null
-                        e.target.src = getTwemojiUrl(sticker.emoji)
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {(activeTool === 'draw' || (selectedElement?.type === 'text' && activeTool !== 'text')) && (
             <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
               <h2 className="text-lg font-semibold text-gray-500">{activeTool === 'draw' ? 'Brush Colors' : 'Colors'}</h2>
@@ -893,6 +866,37 @@ export default function FrameDesigner() {
               className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
             />
           </div>
+
+          {activeTool === 'sticker' && (
+            <>
+              <hr className="border-gray-200" />
+
+              <div>
+                <h2 className="text-lg font-semibold text-gray-500">Stickers</h2>
+                <div className="mt-3 grid grid-cols-5 gap-1.5">
+                  {STICKERS.map((sticker, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleAddSticker(sticker)}
+                      className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
+                    >
+                      <img
+                        src={getFluentUrl(sticker.slug)}
+                        alt={sticker.slug}
+                        className="w-full h-full object-contain"
+                        draggable={false}
+                        onError={(e) => {
+                          e.target.onerror = null
+                          e.target.src = getTwemojiUrl(sticker.emoji)
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {activeTool === 'color' && (
             <>
