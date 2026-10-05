@@ -45,7 +45,7 @@ export default function ContactUs() {
     <div className="min-h-dvh bg-white">
       <Navbar />
 
-      <section className="bg-pink-50 text-center py-16 px-6">
+      <section className="text-center py-16 px-6">
         <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
           Talk to our <span className="text-pink-primary">support team</span>
         </h1>
