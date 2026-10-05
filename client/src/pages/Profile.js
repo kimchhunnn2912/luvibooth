@@ -14,7 +14,7 @@ import coinIcon from '../assets/coin.png'
 const COLLAB_LIMIT = {
   'Free Plan': 0,
   'Pro Plan': 6,
-  'Pro Max Plan': '∞',
+  'Pro Max Plan': 10,
 }
 
 const formatDate = (iso) =>

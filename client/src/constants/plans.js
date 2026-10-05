@@ -32,7 +32,7 @@ export const PLANS = [
       '30 photos per day',
       'No watermark',
       'Smart frame recommendation',
-      'Unlimited collab booth',
+      '10 collab booth sessions / month',
       'Early access to new frames',
       '160 coins / month',
     ],
