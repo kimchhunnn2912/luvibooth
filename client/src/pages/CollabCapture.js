@@ -75,6 +75,8 @@ export default function CollabCapture() {
   const [photos, setPhotos] = useState([])
   const [template, setTemplate] = useState(null)
   const [frameChosen, setFrameChosen] = useState(false)
+  const [pendingLayoutId, setPendingLayoutId] = useState(null)
+  const [pendingTemplateId, setPendingTemplateId] = useState(null)
   const [unlockedIds, setUnlockedIds] = useState(new Set())
 
   const localVideoRef = useRef(null)
@@ -350,6 +352,15 @@ export default function CollabCapture() {
     socket.emit('frame-select', { roomCode, templateId: null, layoutId: id })
   }
 
+  const handleConfirmFrame = () => {
+    if (pendingTemplateId) {
+      const t = FRAME_TEMPLATES.find((f) => f.id === pendingTemplateId)
+      if (t) handleChooseTemplate(t)
+    } else if (pendingLayoutId) {
+      handleChooseLayout(pendingLayoutId)
+    }
+  }
+
   const handleStartCapture = () => {
     if (!friendConnected || capturing || done) return
     socket.emit('capture-start', { roomCode, delay })
@@ -401,8 +412,20 @@ export default function CollabCapture() {
               <p className="mt-1 text-sm text-gray-500 text-center">Just picking a pose count? Pick one below.</p>
               <div className="mt-6 flex flex-wrap justify-center gap-4">
                 {LAYOUTS.map((l) => (
-                  <button key={l.id} type="button" onClick={() => handleChooseLayout(l.id)} className="text-center">
-                    <div className={`${l.cols === 2 ? 'w-[184px]' : 'w-24'} rounded-2xl bg-pink-100 p-2`}>
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => {
+                      setPendingLayoutId(l.id)
+                      setPendingTemplateId(null)
+                    }}
+                    className="text-center"
+                  >
+                    <div
+                      className={`${l.cols === 2 ? 'w-[184px]' : 'w-24'} rounded-2xl bg-pink-100 p-2 ${
+                        pendingLayoutId === l.id ? 'ring-4 ring-pink-primary' : ''
+                      }`}
+                    >
                       <div className={l.cols === 2 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}>
                         {Array.from({ length: l.boxes }).map((_, i) => (
                           <div key={i} className="aspect-[3/4] bg-white rounded-lg" />
@@ -425,10 +448,17 @@ export default function CollabCapture() {
                       key={t.id}
                       type="button"
                       disabled={!owned}
-                      onClick={() => handleChooseTemplate(t)}
+                      onClick={() => {
+                        setPendingTemplateId(t.id)
+                        setPendingLayoutId(null)
+                      }}
                       className="text-left group w-full max-w-[170px] mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="relative rounded-2xl overflow-hidden bg-gray-50">
+                      <div
+                        className={`relative rounded-2xl overflow-hidden bg-gray-50 ${
+                          pendingTemplateId === t.id ? 'ring-4 ring-pink-primary' : ''
+                        }`}
+                      >
                         {owned && (
                           <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-green-500 text-white text-[10px] font-bold px-2 py-1">
                             <Check size={10} strokeWidth={3} />
@@ -471,6 +501,21 @@ export default function CollabCapture() {
                 </a>{' '}
                 first.
               </p>
+
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  disabled={!pendingLayoutId && !pendingTemplateId}
+                  onClick={handleConfirmFrame}
+                  className="rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pendingTemplateId
+                    ? `Continue with ${FRAME_TEMPLATES.find((f) => f.id === pendingTemplateId)?.name}`
+                    : pendingLayoutId
+                    ? `Continue with Layout ${pendingLayoutId}`
+                    : 'Select a layout or frame to continue'}
+                </button>
+              </div>
             </div>
           ) : (
             <div className="mt-16 text-center">
