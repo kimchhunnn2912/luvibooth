@@ -82,6 +82,7 @@ export default function CollabCapture() {
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const localStreamRef = useRef(null)
+  const remoteStreamRef = useRef(null)
   const pcRef = useRef(null)
   const cancelRef = useRef(false)
   const savedStripRef = useRef(false)
@@ -125,6 +126,21 @@ export default function CollabCapture() {
     }
   }, [])
 
+  // The camera stream (and the peer's remote stream) can resolve before the
+  // frame-selection gate clears — at that point the <video> elements don't
+  // exist in the DOM yet, so assigning srcObject in those callbacks has
+  // nothing to attach to. Once frameChosen flips true and the video tags
+  // actually mount, re-attach whatever streams are already sitting in refs.
+  useEffect(() => {
+    if (!frameChosen) return
+    if (localVideoRef.current && localStreamRef.current) {
+      localVideoRef.current.srcObject = localStreamRef.current
+    }
+    if (remoteVideoRef.current && remoteStreamRef.current) {
+      remoteVideoRef.current.srcObject = remoteStreamRef.current
+    }
+  }, [frameChosen])
+
   const createPeerConnection = useCallback(() => {
     const pc = new RTCPeerConnection(ICE_SERVERS)
     pc.onicecandidate = (e) => {
@@ -133,6 +149,7 @@ export default function CollabCapture() {
       }
     }
     pc.ontrack = (e) => {
+      remoteStreamRef.current = e.streams[0]
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]
       setFriendConnected(true)
     }
