@@ -56,14 +56,19 @@ export default function Photobooth() {
           ))}
         </div>
 
-        <button
-          type="button"
-          disabled={!selected}
-          onClick={() => selected && navigate('/photobooth/capture', { state: { layoutId: selected, template } })}
-          className="mt-8 rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        <div
+          className="sticky z-40 flex justify-center py-4"
+          style={{ bottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          {selected ? `Continue with layout ${selected}` : 'Select a layout to continue'}
-        </button>
+          <button
+            type="button"
+            disabled={!selected}
+            onClick={() => selected && navigate('/photobooth/capture', { state: { layoutId: selected, template } })}
+            className="rounded-full bg-pink-primary text-white font-semibold px-8 py-3 shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {selected ? `Continue with layout ${selected}` : 'Select a layout to continue'}
+          </button>
+        </div>
       </section>
 
       <Footer />
