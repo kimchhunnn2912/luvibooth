@@ -751,7 +751,7 @@ export default function FrameDesigner() {
             </div>
           )}
 
-          <div className="flex-1 flex items-center justify-center py-4 overflow-auto">
+          <div className="flex-1 flex items-start justify-center py-4 overflow-auto">
             <div
               ref={frameRef}
               onClick={() => setSelectedId(null)}
