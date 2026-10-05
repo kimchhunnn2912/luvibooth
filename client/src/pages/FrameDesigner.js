@@ -651,7 +651,7 @@ export default function FrameDesigner() {
       </div>
 
       <section className="max-w-[1600px] mx-auto px-6 md:px-10 py-8 flex flex-col lg:flex-row gap-8">
-        <div className="flex flex-wrap lg:flex-col justify-center gap-2 w-full lg:w-20 shrink-0">
+        <div className="flex flex-wrap lg:flex-col justify-center lg:justify-start gap-2 w-full lg:w-20 shrink-0">
           {TOOLS.map((tool) => (
             <button
               key={tool.id}
