@@ -651,105 +651,209 @@ export default function FrameDesigner() {
       </div>
 
       <section className="max-w-[1600px] mx-auto px-6 md:px-10 py-8 flex flex-col lg:flex-row gap-8">
-        <div className="flex flex-wrap lg:flex-col justify-center lg:justify-start gap-2 w-full lg:w-20 shrink-0">
-          {TOOLS.map((tool) => (
-            <button
-              key={tool.id}
-              type="button"
-              onClick={() => setActiveTool(tool.id)}
-              className={toolButtonClasses(activeTool === tool.id)}
-            >
-              <tool.icon size={16} />
-              {tool.label}
+        <div className="w-full lg:w-72 shrink-0 space-y-6">
+          <div className="flex flex-wrap lg:flex-col justify-center lg:justify-start gap-2">
+            {TOOLS.map((tool) => (
+              <button
+                key={tool.id}
+                type="button"
+                onClick={() => setActiveTool(tool.id)}
+                className={toolButtonClasses(activeTool === tool.id)}
+              >
+                <tool.icon size={16} />
+                {tool.label}
+              </button>
+            ))}
+            <div className="hidden lg:block border-t border-gray-200 my-1" />
+            <button type="button" onClick={handleUndo} disabled={historyIndex === 0} className={`${toolButtonClasses(false)} disabled:opacity-40`}>
+              <Undo2 size={16} />
+              Undo
             </button>
-          ))}
-          <div className="hidden lg:block border-t border-gray-200 my-1" />
-          <button type="button" onClick={handleUndo} disabled={historyIndex === 0} className={`${toolButtonClasses(false)} disabled:opacity-40`}>
-            <Undo2 size={16} />
-            Undo
-          </button>
-          <button
-            type="button"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1}
-            className={`${toolButtonClasses(false)} disabled:opacity-40`}
-          >
-            <Redo2 size={16} />
-            Redo
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            disabled={
-              selectedElement
-                ? selectedElement[SIZE_PROP[selectedElement.type]] >= SIZE_BOUNDS[selectedElement.type][1]
-                : zoom >= MAX_ZOOM
-            }
-            className={`${toolButtonClasses(false)} disabled:opacity-40`}
-          >
-            <ZoomIn size={16} />
-            {selectedElement ? 'Bigger' : 'Zoom in'}
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            disabled={
-              selectedElement
-                ? selectedElement[SIZE_PROP[selectedElement.type]] <= SIZE_BOUNDS[selectedElement.type][0]
-                : zoom <= MIN_ZOOM
-            }
-            className={`${toolButtonClasses(false)} disabled:opacity-40`}
-          >
-            <ZoomOut size={16} />
-            {selectedElement ? 'Smaller' : 'Zoom out'}
-          </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className={`${toolButtonClasses(false)} disabled:opacity-40`}
+            >
+              <Redo2 size={16} />
+              Redo
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={
+                selectedElement
+                  ? selectedElement[SIZE_PROP[selectedElement.type]] >= SIZE_BOUNDS[selectedElement.type][1]
+                  : zoom >= MAX_ZOOM
+              }
+              className={`${toolButtonClasses(false)} disabled:opacity-40`}
+            >
+              <ZoomIn size={16} />
+              {selectedElement ? 'Bigger' : 'Zoom in'}
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={
+                selectedElement
+                  ? selectedElement[SIZE_PROP[selectedElement.type]] <= SIZE_BOUNDS[selectedElement.type][0]
+                  : zoom <= MIN_ZOOM
+              }
+              className={`${toolButtonClasses(false)} disabled:opacity-40`}
+            >
+              <ZoomOut size={16} />
+              {selectedElement ? 'Smaller' : 'Zoom out'}
+            </button>
+          </div>
+
+          {activeTool === 'sticker' && (
+            <>
+              <hr className="border-gray-200" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-500">Stickers</h2>
+                <div className="mt-3 grid grid-cols-5 gap-1.5">
+                  {STICKERS.map((sticker, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleAddSticker(sticker)}
+                      className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
+                    >
+                      <img
+                        src={getFluentUrl(sticker.slug)}
+                        alt={sticker.slug}
+                        className="w-full h-full object-contain"
+                        draggable={false}
+                        onError={(e) => {
+                          e.target.onerror = null
+                          e.target.src = getTwemojiUrl(sticker.emoji)
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTool === 'color' && (
+            <>
+              <hr className="border-gray-200" />
+              {isImageFrame ? (
+                <p className="text-sm text-gray-400">This frame's border is part of its design and can't be changed.</p>
+              ) : (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-500">Border colors</h2>
+                  <div className="mt-3 grid grid-cols-5 gap-2">
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setBorderColor(c)}
+                        style={{ backgroundColor: c }}
+                        className={`w-9 h-9 rounded-full border-2 transition ${
+                          borderColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTool === 'text' && (
+            <>
+              <hr className="border-gray-200" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-500">Add text</h2>
+                <input
+                  type="text"
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddText()}
+                  placeholder="Type something..."
+                  className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
+                />
+
+                <p className="mt-4 text-xs text-gray-400">
+                  {selectedElement?.type === 'text' ? 'Tap a color to recolor the selected text' : 'Pick a color for your text'}
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => handleColorSelect(c)}
+                      style={{ backgroundColor: c }}
+                      className={`w-9 h-9 rounded-full border-2 transition ${
+                        activeColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddText}
+                  className="mt-4 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
+                >
+                  Add text
+                </button>
+              </div>
+            </>
+          )}
+
+          {(activeTool === 'draw' || (selectedElement?.type === 'text' && activeTool !== 'text')) && (
+            <>
+              <hr className="border-gray-200" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-500">{activeTool === 'draw' ? 'Brush Colors' : 'Colors'}</h2>
+                {selectedElement?.type === 'text' ? (
+                  <p className="mt-1 text-xs text-pink-primary">Tap a color to recolor the selected text</p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-400">Select a placed text to recolor it, or pick a color before typing new text</p>
+                )}
+                <div className="mt-3 grid grid-cols-5 gap-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => handleColorSelect(c)}
+                      style={{ backgroundColor: c }}
+                      className={`w-9 h-9 rounded-full border-2 transition ${
+                        activeColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {activeTool === 'draw' && (
+                  <>
+                    <hr className="my-5 border-gray-200" />
+                    <h2 className="text-lg font-semibold text-gray-500">Brush Size</h2>
+                    <div className="mt-3 flex gap-2">
+                      {BRUSH_SIZES.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setBrushSize(s)}
+                          className={`w-11 h-11 rounded-full bg-pink-50 flex items-center justify-center border-2 transition ${
+                            brushSize === s ? 'border-pink-primary' : 'border-transparent'
+                          }`}
+                        >
+                          <span className="rounded-full bg-dark" style={{ width: s, height: s }} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-8 justify-center">
-          {(activeTool === 'draw' || (selectedElement?.type === 'text' && activeTool !== 'text')) && (
-            <div className="w-full max-w-xs mx-auto lg:max-w-none lg:mx-0 lg:w-56 shrink-0">
-              <h2 className="text-lg font-semibold text-gray-500">{activeTool === 'draw' ? 'Brush Colors' : 'Colors'}</h2>
-              {selectedElement?.type === 'text' ? (
-                <p className="mt-1 text-xs text-pink-primary">Tap a color to recolor the selected text</p>
-              ) : (
-                <p className="mt-1 text-xs text-gray-400">Select a placed text to recolor it, or pick a color before typing new text</p>
-              )}
-              <div className="mt-3 grid grid-cols-5 gap-2">
-                {COLORS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => handleColorSelect(c)}
-                    style={{ backgroundColor: c }}
-                    className={`w-9 h-9 rounded-full border-2 transition ${
-                      activeColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {activeTool === 'draw' && (
-                <>
-                  <hr className="my-5 border-gray-200" />
-                  <h2 className="text-lg font-semibold text-gray-500">Brush Size</h2>
-                  <div className="mt-3 flex gap-2">
-                    {BRUSH_SIZES.map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setBrushSize(s)}
-                        className={`w-11 h-11 rounded-full bg-pink-50 flex items-center justify-center border-2 transition ${
-                          brushSize === s ? 'border-pink-primary' : 'border-transparent'
-                        }`}
-                      >
-                        <span className="rounded-full bg-dark" style={{ width: s, height: s }} />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
 
           <div className="flex-1 flex items-start justify-center py-4 overflow-auto">
             <div
@@ -866,107 +970,6 @@ export default function FrameDesigner() {
               className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
             />
           </div>
-
-          {activeTool === 'sticker' && (
-            <>
-              <hr className="border-gray-200" />
-
-              <div>
-                <h2 className="text-lg font-semibold text-gray-500">Stickers</h2>
-                <div className="mt-3 grid grid-cols-5 gap-1.5">
-                  {STICKERS.map((sticker, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleAddSticker(sticker)}
-                      className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
-                    >
-                      <img
-                        src={getFluentUrl(sticker.slug)}
-                        alt={sticker.slug}
-                        className="w-full h-full object-contain"
-                        draggable={false}
-                        onError={(e) => {
-                          e.target.onerror = null
-                          e.target.src = getTwemojiUrl(sticker.emoji)
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTool === 'color' && (
-            <>
-              <hr className="border-gray-200" />
-
-              {isImageFrame ? (
-                <p className="text-sm text-gray-400">This frame's border is part of its design and can't be changed.</p>
-              ) : (
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-500">Border colors</h2>
-                  <div className="mt-3 grid grid-cols-5 gap-2">
-                    {COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setBorderColor(c)}
-                        style={{ backgroundColor: c }}
-                        className={`w-9 h-9 rounded-full border-2 transition ${
-                          borderColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTool === 'text' && (
-            <>
-              <hr className="border-gray-200" />
-
-              <div>
-                <h2 className="text-lg font-semibold text-gray-500">Add text</h2>
-                <input
-                  type="text"
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddText()}
-                  placeholder="Type something..."
-                  className="mt-3 w-full rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-primary/40 focus:border-pink-primary"
-                />
-
-                <p className="mt-4 text-xs text-gray-400">
-                  {selectedElement?.type === 'text' ? 'Tap a color to recolor the selected text' : 'Pick a color for your text'}
-                </p>
-                <div className="mt-2 grid grid-cols-5 gap-2">
-                  {COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => handleColorSelect(c)}
-                      style={{ backgroundColor: c }}
-                      className={`w-9 h-9 rounded-full border-2 transition ${
-                        activeColor === c ? 'border-pink-primary scale-110' : 'border-transparent'
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAddText}
-                  className="mt-4 w-full rounded-full border-2 border-pink-primary text-pink-primary font-semibold py-3 hover:bg-pink-50 transition"
-                >
-                  Add text
-                </button>
-              </div>
-            </>
-          )}
 
           <hr className="border-gray-200" />
 
