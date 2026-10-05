@@ -8,6 +8,7 @@ import { getFluentUrl, getTwemojiUrl } from '../utils/stickerIcons'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { Check } from 'lucide-react'
+import UnlockFrameModal from '../components/UnlockFrameModal'
 import coinIcon from '../assets/coin.png'
 
 const TEMPLATES = FRAME_TEMPLATES
@@ -45,6 +46,7 @@ export default function BrowseFrames() {
   const [coins, setCoins] = useState(0)
   const [unlockedIds, setUnlockedIds] = useState(new Set())
   const [unlocking, setUnlocking] = useState(false)
+  const [confirmingUnlock, setConfirmingUnlock] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -87,7 +89,7 @@ export default function BrowseFrames() {
   }).sort((a, b) => (isOwned(a) === isOwned(b) ? 0 : isOwned(a) ? -1 : 1))
   const selectedTemplate = TEMPLATES.find((t) => t.id === selectedId) || null
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!selectedTemplate || unlocking) return
 
     if (isOwned(selectedTemplate)) {
@@ -110,6 +112,13 @@ export default function BrowseFrames() {
       return
     }
 
+    setConfirmingUnlock(true)
+  }
+
+  const handleConfirmUnlock = async () => {
+    if (!selectedTemplate || unlocking) return
+    const price = priceFor(selectedTemplate)
+
     setUnlocking(true)
     try {
       const { error: unlockError } = await supabase
@@ -131,6 +140,7 @@ export default function BrowseFrames() {
 
       setCoins(newCoins)
       setUnlockedIds((prev) => new Set(prev).add(selectedTemplate.id))
+      setConfirmingUnlock(false)
       navigate('/photobooth', { state: { template: selectedTemplate } })
     } catch (err) {
       console.error('Failed to unlock frame:', err.message)
@@ -305,6 +315,17 @@ export default function BrowseFrames() {
       </section>
 
       <Footer />
+
+      {confirmingUnlock && selectedTemplate && (
+        <UnlockFrameModal
+          template={selectedTemplate}
+          price={priceFor(selectedTemplate)}
+          coins={coins}
+          unlocking={unlocking}
+          onCancel={() => setConfirmingUnlock(false)}
+          onConfirm={handleConfirmUnlock}
+        />
+      )}
     </div>
   )
 }

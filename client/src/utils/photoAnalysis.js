@@ -1,14 +1,15 @@
 import { loadImage } from './frameCanvas'
 
 const SAMPLE_SIZE = 32
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'
 
-// Analyzes captured photos by sampling their actual pixels (downscaled for
-// speed) to get an average brightness/saturation/color, then classifies the
-// overall "mood" — this drives the frame recommendations, so it's a real
-// (if simple) analysis of the photos rather than a random/fake suggestion.
-export const analyzePhotos = async (photos) => {
+// Downscales/averages pixels to get a rough brightness/saturation/color
+// read, then buckets that into a mood. This is a last-resort fallback —
+// it has no understanding of photo content at all, just raw color stats —
+// used only if the real vision-based analysis (see analyzePhotos below)
+// can't reach the server.
+const analyzePhotosByColor = async (photos) => {
   let totalR = 0
-  let totalG = 0
   let totalB = 0
   let totalBrightness = 0
   let totalSaturation = 0
@@ -27,14 +28,12 @@ export const analyzePhotos = async (photos) => {
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i]
-        const g = data[i + 1]
         const b = data[i + 2]
-        const max = Math.max(r, g, b)
-        const min = Math.min(r, g, b)
+        const max = Math.max(r, data[i + 1], b)
+        const min = Math.min(r, data[i + 1], b)
         totalR += r
-        totalG += g
         totalB += b
-        totalBrightness += (r + g + b) / 3
+        totalBrightness += (r + data[i + 1] + b) / 3
         totalSaturation += max === 0 ? 0 : (max - min) / max
         count++
       }
@@ -44,11 +43,10 @@ export const analyzePhotos = async (photos) => {
   }
 
   if (count === 0) {
-    return { mood: 'neutral', avgR: 128, avgG: 128, avgB: 128, avgBrightness: 128, avgSaturation: 0 }
+    return { mood: 'neutral', occasion: 'none' }
   }
 
   const avgR = totalR / count
-  const avgG = totalG / count
   const avgB = totalB / count
   const avgBrightness = totalBrightness / count
   const avgSaturation = totalSaturation / count
@@ -64,10 +62,30 @@ export const analyzePhotos = async (photos) => {
     mood = avgBrightness > 160 ? 'pastel' : 'neutral'
   }
 
-  return { mood, avgR, avgG, avgB, avgBrightness, avgSaturation }
+  return { mood, occasion: 'none' }
+}
+
+// Sends up to two captured photos to the server for real vision-based
+// analysis (mood + any holiday occasion actually visible in the photo),
+// falling back to the color-only heuristic if the server can't be reached
+// or photo analysis isn't configured there.
+export const analyzePhotos = async (photos) => {
+  try {
+    const res = await fetch(`${SERVER_URL}/analyze-photo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photos: photos.filter(Boolean).slice(0, 2) }),
+    })
+    const data = await res.json()
+    if (res.ok && data.mood) return data
+  } catch {
+    // network error — fall through to the local heuristic
+  }
+  return analyzePhotosByColor(photos)
 }
 
 const MOOD_LABELS = {
+  cute: 'cute, playful vibe',
   monochrome: 'black & white tones',
   'warm-bright': 'warm, bright tones',
   'warm-moody': 'warm, moody tones',
@@ -76,12 +94,19 @@ const MOOD_LABELS = {
   neutral: 'balanced tones',
 }
 
-export const describeMood = (mood) => MOOD_LABELS[mood] || 'your photos'
+export const describeMood = (mood, occasion) => {
+  if (occasion && occasion !== 'none') return `${occasion} spirit`
+  return MOOD_LABELS[mood] || 'your photos'
+}
 
-// Picks up to `count` templates matching the detected mood, filling any
-// remaining slots from the rest of the list so there's always a full set.
-export const getRecommendedTemplates = (templates, mood, count = 3) => {
-  const matched = templates.filter((t) => t.moods?.includes(mood))
-  const rest = templates.filter((t) => !matched.includes(t))
-  return [...matched, ...rest].slice(0, count)
+// Picks up to `count` templates, prioritizing a detected occasion (e.g. a
+// Christmas frame when the photo actually shows Christmas content) over a
+// plain mood match, and filling any remaining slots from the rest of the
+// list so there's always a full set.
+export const getRecommendedTemplates = (templates, mood, occasion, count = 3) => {
+  const occasionMatched =
+    occasion && occasion !== 'none' ? templates.filter((t) => t.occasions?.includes(occasion)) : []
+  const moodMatched = templates.filter((t) => !occasionMatched.includes(t) && t.moods?.includes(mood))
+  const rest = templates.filter((t) => !occasionMatched.includes(t) && !moodMatched.includes(t))
+  return [...occasionMatched, ...moodMatched, ...rest].slice(0, count)
 }

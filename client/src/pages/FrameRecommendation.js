@@ -17,6 +17,7 @@ export default function FrameRecommendation() {
 
   const [analyzing, setAnalyzing] = useState(true)
   const [mood, setMood] = useState('neutral')
+  const [occasion, setOccasion] = useState('none')
 
   useEffect(() => {
     let cancelled = false
@@ -27,6 +28,7 @@ export default function FrameRecommendation() {
     analyzePhotos(photos).then((result) => {
       if (!cancelled) {
         setMood(result.mood)
+        setOccasion(result.occasion || 'none')
         setAnalyzing(false)
       }
     })
@@ -37,7 +39,7 @@ export default function FrameRecommendation() {
   }, [])
 
   const compatible = FRAME_TEMPLATES.filter((t) => t.layoutId === layoutId)
-  const recommended = getRecommendedTemplates(compatible, mood, 3)
+  const recommended = getRecommendedTemplates(compatible, mood, occasion, 3)
 
   const handleSelectTemplate = (template) => {
     navigate('/photobooth/design', { state: { layoutId, photos, template } })
@@ -74,7 +76,7 @@ export default function FrameRecommendation() {
         ) : (
           <>
             <p className="mt-1 text-sm text-gray-400 text-left">
-              Based on the {describeMood(mood)} in your photos.
+              Based on the {describeMood(mood, occasion)} in your photos.
             </p>
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ChevronDown, ArrowRight, Camera } from 'lucide-react'
+import { ChevronDown, ArrowRight, Camera, Check } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { LAYOUTS } from '../constants/layouts'
+import { FRAME_TEMPLATES } from '../constants/frameTemplates'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { socket } from '../services/socket'
 import { composeStripPreview } from '../utils/frameCanvas'
+import coinIcon from '../assets/coin.png'
 
 const DELAYS = [3, 5, 10]
 
@@ -64,6 +66,9 @@ export default function CollabCapture() {
   const [countdown, setCountdown] = useState(null)
   const [capturing, setCapturing] = useState(false)
   const [photos, setPhotos] = useState([])
+  const [template, setTemplate] = useState(null)
+  const [frameChosen, setFrameChosen] = useState(false)
+  const [unlockedIds, setUnlockedIds] = useState(new Set())
 
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
@@ -75,6 +80,20 @@ export default function CollabCapture() {
 
   const layout = LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
   const done = photos.length >= layout.boxes
+
+  // Only the host picks the frame, so only the host needs to know which
+  // frames they've unlocked.
+  useEffect(() => {
+    if (!isHost || !user) return
+    supabase
+      .from('unlocked_frames')
+      .select('frame_id')
+      .eq('user_id', user.id)
+      .then(({ data, error }) => {
+        if (!error) setUnlockedIds(new Set((data || []).map((r) => r.frame_id)))
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHost, user])
 
   // Get the local camera once on mount.
   useEffect(() => {
@@ -233,14 +252,23 @@ export default function CollabCapture() {
       runCaptureSequenceRef.current(d)
     }
 
+    const handleFrameSelect = ({ templateId, layoutId: chosenLayoutId }) => {
+      const t = templateId ? FRAME_TEMPLATES.find((f) => f.id === templateId) : null
+      setTemplate(t || null)
+      setLayoutId(t ? t.layoutId : chosenLayoutId)
+      setFrameChosen(true)
+    }
+
     socket.on('room-users', handleRoomUsers)
     socket.on('webrtc-signal', handleSignal)
     socket.on('capture-start', handleCaptureStart)
+    socket.on('frame-select', handleFrameSelect)
 
     return () => {
       socket.off('room-users', handleRoomUsers)
       socket.off('webrtc-signal', handleSignal)
       socket.off('capture-start', handleCaptureStart)
+      socket.off('frame-select', handleFrameSelect)
     }
   }, [roomCode, isHost, createPeerConnection])
 
@@ -295,10 +323,24 @@ export default function CollabCapture() {
       .catch((err) => console.error('Failed to compose photo strip preview:', err))
   }, [done, user, layoutId, photos, layout])
 
-  const handleLayoutChange = (id) => {
-    if (capturing) return
+  const isOwnedTemplate = (t) => t.badge === 'Free' || unlockedIds.has(t.id)
+
+  const handleChooseTemplate = (t) => {
+    if (!isHost || !isOwnedTemplate(t)) return
+    setTemplate(t)
+    setLayoutId(t.layoutId)
+    setPhotos([])
+    setFrameChosen(true)
+    socket.emit('frame-select', { roomCode, templateId: t.id, layoutId: t.layoutId })
+  }
+
+  const handleChooseLayout = (id) => {
+    if (!isHost) return
+    setTemplate(null)
     setLayoutId(id)
     setPhotos([])
+    setFrameChosen(true)
+    socket.emit('frame-select', { roomCode, templateId: null, layoutId: id })
   }
 
   const handleStartCapture = () => {
@@ -308,53 +350,128 @@ export default function CollabCapture() {
   }
 
   const handleContinue = () => {
-    navigate('/photobooth/design', { state: { layoutId, photos, stripId: stripIdRef.current } })
+    navigate('/photobooth/design', { state: { layoutId, template, photos, stripId: stripIdRef.current } })
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh flex flex-col bg-white">
       <Navbar />
 
-      <section className="max-w-[1440px] mx-auto px-6 md:px-16 py-6">
+      <section className="flex-1 max-w-[1440px] mx-auto px-6 md:px-16 py-6">
         <div className="flex flex-wrap items-center justify-center gap-4">
           <span className="text-lg font-extrabold text-dark">Room Name:</span>
           <span className="rounded-full bg-pink-primary text-white font-semibold px-5 py-2">{roomCode}</span>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
-          <span className="text-lg font-extrabold text-dark">Layout:</span>
-          <div className="relative">
-            <select
-              value={layoutId}
-              disabled={capturing}
-              onChange={(e) => handleLayoutChange(e.target.value)}
-              className={`${selectClasses} w-44 truncate`}
-            >
-              {LAYOUTS.map((l) => (
-                <option key={l.id} value={l.id}>
-                  Layout {l.id} ({l.pose})
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
+        {frameChosen && (
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
+            <span className="text-lg font-extrabold text-dark">Frame:</span>
+            <span className="rounded-full border-2 border-pink-primary text-pink-primary font-semibold px-5 py-2">
+              {template ? template.name : `Layout ${layoutId} (${layout.pose})`}
+            </span>
+            <div className="relative">
+              <select
+                value={delay}
+                disabled={capturing}
+                onChange={(e) => setDelay(Number(e.target.value))}
+                className={selectClasses}
+              >
+                {DELAYS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}s delay
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
+            </div>
           </div>
-          <div className="relative">
-            <select
-              value={delay}
-              disabled={capturing}
-              onChange={(e) => setDelay(Number(e.target.value))}
-              className={selectClasses}
-            >
-              {DELAYS.map((d) => (
-                <option key={d} value={d}>
-                  {d}s delay
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
-          </div>
-        </div>
+        )}
 
+        {!frameChosen ? (
+          isHost ? (
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-dark text-center">Choose a layout</h2>
+              <p className="mt-1 text-sm text-gray-500 text-center">Just picking a pose count? Pick one below.</p>
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
+                {LAYOUTS.map((l) => (
+                  <button key={l.id} type="button" onClick={() => handleChooseLayout(l.id)} className="text-center">
+                    <div className={`${l.cols === 2 ? 'w-[184px]' : 'w-24'} rounded-2xl bg-pink-100 p-2`}>
+                      <div className={l.cols === 2 ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}>
+                        {Array.from({ length: l.boxes }).map((_, i) => (
+                          <div key={i} className="aspect-[3/4] bg-white rounded-lg" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm font-bold text-dark">Layout {l.id}</p>
+                    <p className="text-xs text-gray-500">{l.pose}</p>
+                  </button>
+                ))}
+              </div>
+
+              <h2 className="mt-12 text-xl font-bold text-dark text-center">Or pick a designed frame</h2>
+              <p className="mt-1 text-sm text-gray-500 text-center">Your friend will see whatever you pick.</p>
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 max-w-[1200px] mx-auto">
+                {FRAME_TEMPLATES.map((t) => {
+                  const owned = isOwnedTemplate(t)
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      disabled={!owned}
+                      onClick={() => handleChooseTemplate(t)}
+                      className="text-left group w-full max-w-[170px] mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="relative rounded-2xl overflow-hidden bg-gray-50">
+                        {owned && (
+                          <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-green-500 text-white text-[10px] font-bold px-2 py-1">
+                            <Check size={10} strokeWidth={3} />
+                            Owned
+                          </span>
+                        )}
+                        {!owned && (
+                          <span className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 rounded-full bg-black/70 text-white text-[10px] font-bold px-2 py-1">
+                            <img src={coinIcon} alt="" className="w-3 h-3" />
+                            Locked
+                          </span>
+                        )}
+                        {t.type === 'image' ? (
+                          <img
+                            src={t.overlay}
+                            alt=""
+                            draggable={false}
+                            className={`w-full h-auto transition group-hover:scale-105 ${!owned ? 'opacity-60' : ''}`}
+                            style={{ aspectRatio: `${t.canvasWidth} / ${t.canvasHeight}` }}
+                          />
+                        ) : (
+                          <div className="p-2" style={{ backgroundColor: t.borderColor }}>
+                            <div className={LAYOUTS.find((l) => l.id === t.layoutId)?.cols === 2 ? 'grid grid-cols-2 gap-1.5' : 'flex flex-col gap-1.5'}>
+                              {Array.from({ length: LAYOUTS.find((l) => l.id === t.layoutId)?.boxes || 4 }).map((_, i) => (
+                                <div key={i} className="aspect-[4/3] bg-white rounded-lg" />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm font-bold text-dark">{t.name}</p>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-6 text-center text-xs text-gray-400">
+                Want a locked frame? Unlock it in{' '}
+                <a href="/frame" className="text-pink-primary font-semibold hover:underline">
+                  Browse Frames
+                </a>{' '}
+                first.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-16 text-center">
+              <p className="text-gray-500">Waiting for {friendName || 'the host'} to choose a frame...</p>
+            </div>
+          )
+        ) : (
+          <>
         <div className="mt-6 flex flex-col lg:flex-row items-center lg:items-start justify-center gap-5">
           <div className="flex-1 flex flex-col sm:flex-row justify-center gap-5 w-full max-w-3xl">
             <div className="flex-1">
@@ -455,6 +572,8 @@ export default function CollabCapture() {
             </button>
           ))}
         </div>
+          </>
+        )}
       </section>
 
       <Footer />

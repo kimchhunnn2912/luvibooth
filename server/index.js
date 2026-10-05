@@ -7,6 +7,9 @@ const http = require('http')
 const crypto = require('crypto')
 const { Server } = require('socket.io')
 const { createClient } = require('@supabase/supabase-js')
+const Anthropic = require('@anthropic-ai/sdk')
+const { zodOutputFormat } = require('@anthropic-ai/sdk/helpers/zod')
+const { z } = require('zod')
 
 const ALLOWED_ORIGIN = process.env.CLIENT_URL || "http://localhost:3000"
 
@@ -20,6 +23,11 @@ const PAYWAY_API_KEY = process.env.PAYWAY_API_KEY
 const PAYWAY_BASE_URL = 'https://checkout-sandbox.payway.com.kh/api/payment-gateway/v1/payments'
 const PAYWAY_IS_SANDBOX = PAYWAY_BASE_URL.includes('sandbox')
 
+const anthropic =
+  process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_api_key_here'
+    ? new Anthropic()
+    : null
+
 const app = express()
 const server = http.createServer(app)
 const io = new Server(server, {
@@ -32,10 +40,80 @@ const io = new Server(server, {
 // Middleware
 app.use(cors({ origin: ALLOWED_ORIGIN }))
 app.use(express.json({ limit: '10mb' }))
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`)
+  next()
+})
 
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Luvibooth server is running!! 🎉' })
+})
+
+// Real vision-based photo analysis for frame recommendations. The API key
+// must stay server-side, so the client sends up to a couple of captured
+// photos here and gets back a structured mood/occasion classification —
+// replacing the old client-side pixel-color-averaging heuristic, which had
+// no actual understanding of photo content (couldn't tell "cute" from
+// "moody", let alone notice something like a Christmas sweater in frame).
+const PhotoAnalysisSchema = z.object({
+  mood: z
+    .enum(['cute', 'cool', 'warm-bright', 'warm-moody', 'monochrome', 'pastel', 'neutral'])
+    .describe('The single best-matching overall aesthetic/vibe of the photo(s).'),
+  occasion: z
+    .enum(['christmas', 'none'])
+    .describe('A specific seasonal/holiday theme visibly present in the photo (e.g. Christmas decorations, santa hats, ugly sweaters, candy canes), or "none" if nothing like that is visible.'),
+})
+
+const dataUrlToImageBlock = (dataUrl) => {
+  const match = /^data:(image\/[a-zA-Z+]+);base64,(.+)$/.exec(dataUrl)
+  if (!match) return null
+  return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } }
+}
+
+app.post('/analyze-photo', async (req, res) => {
+  if (!anthropic) {
+    return res.status(503).json({ error: 'Photo analysis is not configured on this server yet.' })
+  }
+
+  const { photos } = req.body
+  if (!Array.isArray(photos) || photos.length === 0) {
+    return res.status(400).json({ error: 'No photos provided.' })
+  }
+
+  const imageBlocks = photos.slice(0, 2).map(dataUrlToImageBlock).filter(Boolean)
+  if (imageBlocks.length === 0) {
+    return res.status(400).json({ error: 'Could not read the provided photos.' })
+  }
+
+  try {
+    const response = await anthropic.messages.parse({
+      model: 'claude-haiku-4-5',
+      max_tokens: 256,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            ...imageBlocks,
+            {
+              type: 'text',
+              text: 'Classify the overall mood and any holiday occasion visible in this photo booth picture.',
+            },
+          ],
+        },
+      ],
+      output_config: { format: zodOutputFormat(PhotoAnalysisSchema) },
+    })
+
+    if (!response.parsed_output) {
+      return res.status(502).json({ error: 'Could not analyze the photo.' })
+    }
+    console.log('Photo analysis result:', response.parsed_output)
+    res.json(response.parsed_output)
+  } catch (err) {
+    console.error('Photo analysis error:', err.message)
+    res.status(500).json({ error: 'Could not analyze the photo.' })
+  }
 })
 
 // ABA PayWay (sandbox) KHQR checkout. amountUsd/description/kind/planName/
@@ -376,6 +454,11 @@ io.on('connection', (socket) => {
   socket.on('capture-start', ({ roomCode, delay }) => {
     if (!roomCode) return
     socket.to(roomCode).emit('capture-start', { delay })
+  })
+
+  socket.on('frame-select', ({ roomCode, templateId, layoutId }) => {
+    if (!roomCode) return
+    socket.to(roomCode).emit('frame-select', { templateId, layoutId })
   })
 
   const leaveCurrentRoom = () => {
