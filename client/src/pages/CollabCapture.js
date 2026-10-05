@@ -502,12 +502,15 @@ export default function CollabCapture() {
                 first.
               </p>
 
-              <div className="mt-6 flex justify-center">
+              <div
+                className="sticky z-40 flex justify-center py-4"
+                style={{ bottom: 'env(safe-area-inset-bottom, 0px)' }}
+              >
                 <button
                   type="button"
                   disabled={!pendingLayoutId && !pendingTemplateId}
                   onClick={handleConfirmFrame}
-                  className="rounded-full bg-pink-primary text-white font-semibold px-8 py-3 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-full bg-pink-primary text-white font-semibold px-8 py-3 shadow-lg hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {pendingTemplateId
                     ? `Continue with ${FRAME_TEMPLATES.find((f) => f.id === pendingTemplateId)?.name}`
