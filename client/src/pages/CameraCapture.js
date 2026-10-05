@@ -387,22 +387,24 @@ export default function CameraCapture() {
           </button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
-          <span className="text-lg font-extrabold text-dark">Layout:</span>
-          <div className="relative">
-            <select
-              value={layoutId}
-              disabled={busy}
-              onChange={(e) => handleLayoutChange(e.target.value)}
-              className={`${selectClasses} w-44 truncate`}
-            >
-              {LAYOUTS.map((l) => (
-                <option key={l.id} value={l.id}>
-                  Layout {l.id} ({l.pose})
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
+        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-extrabold text-dark">Layout:</span>
+            <div className="relative">
+              <select
+                value={layoutId}
+                disabled={busy}
+                onChange={(e) => handleLayoutChange(e.target.value)}
+                className={`${selectClasses} w-44 truncate`}
+              >
+                {LAYOUTS.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    Layout {l.id} ({l.pose})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
+            </div>
           </div>
 
           {mode === 'capture' && (
