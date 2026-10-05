@@ -936,10 +936,33 @@ export default function FrameDesigner() {
                   <button
                     type="button"
                     onClick={() => handleDeleteElement(el.id)}
-                    className="hidden group-hover:flex absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-gray-300 items-center justify-center text-gray-500 hover:text-red-500"
+                    className={`${
+                      selectedId === el.id ? 'flex' : 'hidden group-hover:flex'
+                    } absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white border border-gray-300 items-center justify-center text-gray-500 hover:text-red-500`}
                   >
                     <X size={12} />
                   </button>
+
+                  {selectedId === el.id && (
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 translate-y-full flex items-center gap-1 rounded-full bg-white border border-gray-300 shadow-sm px-1 py-1">
+                      <button
+                        type="button"
+                        onClick={handleZoomOut}
+                        disabled={el[SIZE_PROP[el.type]] <= SIZE_BOUNDS[el.type][0]}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:text-pink-primary disabled:opacity-30"
+                      >
+                        <ZoomOut size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleZoomIn}
+                        disabled={el[SIZE_PROP[el.type]] >= SIZE_BOUNDS[el.type][1]}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:text-pink-primary disabled:opacity-30"
+                      >
+                        <ZoomIn size={13} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
