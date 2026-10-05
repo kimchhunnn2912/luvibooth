@@ -399,11 +399,13 @@ export default function CollabCapture() {
         </div>
 
         {frameChosen && (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
-            <span className="text-lg font-extrabold text-dark">Frame:</span>
-            <span className="rounded-full border-2 border-pink-primary text-pink-primary font-semibold px-5 py-2">
-              {template ? template.name : `Layout ${layoutId} (${layout.pose})`}
-            </span>
+          <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-extrabold text-dark">Frame:</span>
+              <span className="rounded-full border-2 border-pink-primary text-pink-primary font-semibold px-5 py-2">
+                {template ? template.name : `Layout ${layoutId} (${layout.pose})`}
+              </span>
+            </div>
             <div className="relative">
               <select
                 value={delay}
