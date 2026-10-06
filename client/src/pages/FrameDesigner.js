@@ -75,6 +75,24 @@ const COLORS = [
 
 const BRUSH_SIZES = [3, 6, 10, 16]
 
+// A swatch that opens the device's native color picker (the circular hue
+// wheel on iOS, a square picker on desktop) so users aren't limited to the
+// preset swatches above it.
+const CustomColorSwatch = ({ value, onChange }) => (
+  <label
+    title="Pick any color"
+    className="relative w-9 h-9 rounded-full border-2 border-transparent overflow-hidden cursor-pointer"
+    style={{ background: 'conic-gradient(red, orange, yellow, lime, cyan, blue, magenta, red)' }}
+  >
+    <input
+      type="color"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+    />
+  </label>
+)
+
 const MIN_ZOOM = 0.5
 const MAX_ZOOM = 2
 const MIN_STICKER_SIZE = 20
@@ -793,6 +811,7 @@ export default function FrameDesigner() {
                       }`}
                     />
                   ))}
+                  <CustomColorSwatch value={borderColor} onChange={setBorderColor} />
                 </div>
               </div>
             ))}
@@ -824,6 +843,7 @@ export default function FrameDesigner() {
                     }`}
                   />
                 ))}
+                <CustomColorSwatch value={activeColor} onChange={handleColorSelect} />
               </div>
 
               <button
@@ -856,6 +876,7 @@ export default function FrameDesigner() {
                     }`}
                   />
                 ))}
+                <CustomColorSwatch value={activeColor} onChange={handleColorSelect} />
               </div>
 
               {activeTool === 'draw' && (
