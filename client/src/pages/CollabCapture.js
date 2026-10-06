@@ -277,16 +277,31 @@ export default function CollabCapture() {
 
     const handleSignal = async ({ signal }) => {
       if (signal.type === 'offer') {
+        setConnDebug((d) => ({ ...d, step: 'offer received, waiting for camera' }))
         // Make sure our own camera is ready before answering, so the track
         // actually gets attached instead of racing the permission prompt.
-        await waitFor(() => !!localStreamRef.current)
-        const pc = pcRef.current || createPeerConnection()
-        await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp))
-        const answer = await pc.createAnswer()
-        await pc.setLocalDescription(answer)
-        socket.emit('webrtc-signal', { roomCode, signal: { type: 'answer', sdp: answer } })
+        const gotCamera = await waitFor(() => !!localStreamRef.current)
+        if (!gotCamera) {
+          setConnDebug((d) => ({ ...d, step: 'offer ERROR: camera never became ready (20s timeout)' }))
+          return
+        }
+        try {
+          const pc = pcRef.current || createPeerConnection()
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp))
+          const answer = await pc.createAnswer()
+          await pc.setLocalDescription(answer)
+          socket.emit('webrtc-signal', { roomCode, signal: { type: 'answer', sdp: answer } })
+          setConnDebug((d) => ({ ...d, step: 'answer sent' }))
+        } catch (err) {
+          setConnDebug((d) => ({ ...d, step: `answer ERROR: ${err.name}: ${err.message}` }))
+        }
       } else if (signal.type === 'answer') {
-        await pcRef.current?.setRemoteDescription(new RTCSessionDescription(signal.sdp))
+        try {
+          await pcRef.current?.setRemoteDescription(new RTCSessionDescription(signal.sdp))
+          setConnDebug((d) => ({ ...d, step: 'answer applied' }))
+        } catch (err) {
+          setConnDebug((d) => ({ ...d, step: `setRemoteDescription(answer) ERROR: ${err.name}: ${err.message}` }))
+        }
       } else if (signal.type === 'ice-candidate') {
         try {
           await pcRef.current?.addIceCandidate(signal.candidate)
@@ -327,11 +342,16 @@ export default function CollabCapture() {
     if (memberCount !== 2 || !isHost || !localReady || pcRef.current) return
     let cancelled = false
     ;(async () => {
-      const pc = createPeerConnection()
-      const offer = await pc.createOffer()
-      if (cancelled) return
-      await pc.setLocalDescription(offer)
-      socket.emit('webrtc-signal', { roomCode, signal: { type: 'offer', sdp: offer } })
+      try {
+        const pc = createPeerConnection()
+        const offer = await pc.createOffer()
+        if (cancelled) return
+        await pc.setLocalDescription(offer)
+        socket.emit('webrtc-signal', { roomCode, signal: { type: 'offer', sdp: offer } })
+        setConnDebug((d) => ({ ...d, step: 'offer sent' }))
+      } catch (err) {
+        setConnDebug((d) => ({ ...d, step: `offer ERROR: ${err.name}: ${err.message}` }))
+      }
     })()
     return () => {
       cancelled = true
@@ -623,7 +643,7 @@ export default function CollabCapture() {
               {/* Temporary WebRTC diagnostics — remove once the blank-remote-video bug is found. */}
               <p className="mt-1 text-[10px] text-gray-400 break-all">
                 local={connDebug.localTracks ?? '?'} ice={connDebug.ice ?? '?'} conn={connDebug.conn ?? '?'} remoteTrack=
-                {connDebug.remoteTrack ?? '?'}
+                {connDebug.remoteTrack ?? '?'} step={connDebug.step ?? '?'}
               </p>
             </div>
           </div>
