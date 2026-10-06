@@ -388,7 +388,7 @@ export default function CameraCapture() {
         </div>
 
         <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
             <span className="text-lg font-extrabold text-dark">Layout:</span>
             <div className="relative">
               <select
