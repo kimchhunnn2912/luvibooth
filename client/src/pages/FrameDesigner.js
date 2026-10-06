@@ -94,7 +94,15 @@ const nextId = () => `el-${++idCounter}`
 const getTouchDistance = (touches) =>
   Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY)
 
-const VIDEO_MIME_CANDIDATES = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
+// Safari (desktop and iOS) can *record* to video/webm if asked — MediaRecorder
+// reports it as supported — but neither the OS nor Safari itself can actually
+// play a .webm file back afterward, so a WebM download is useless there even
+// though recording "succeeds." Put MP4 first on Safari/WebKit so it's picked
+// instead; everywhere else WebM (smaller, well-supported) stays preferred.
+const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)
+const VIDEO_MIME_CANDIDATES = isSafari
+  ? ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+  : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
 const pickVideoMimeType = () => {
   if (typeof MediaRecorder === 'undefined') return null
   return VIDEO_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type)) || null
@@ -601,11 +609,6 @@ export default function FrameDesigner() {
 
     setVideoExporting(true)
     try {
-      if (typeof window.MediaRecorder === 'undefined') {
-        window.alert('DIAG: MediaRecorder is undefined on this browser.')
-        return
-      }
-
       const images = await Promise.all(capturedPhotos.map((src) => loadImage(src)))
       const { width, height } = images[0]
 
@@ -616,27 +619,8 @@ export default function FrameDesigner() {
       ctx.drawImage(images[0], 0, 0, width, height)
       if (hasWatermark) drawWatermark(ctx, width, height)
 
-      if (typeof canvas.captureStream !== 'function') {
-        window.alert('DIAG: canvas.captureStream is not a function on this browser.')
-        return
-      }
-
-      let stream
-      try {
-        stream = canvas.captureStream(15)
-      } catch (streamErr) {
-        window.alert(`DIAG: captureStream() threw — ${streamErr.name}: ${streamErr.message}`)
-        return
-      }
-
-      let recorder
-      try {
-        recorder = new MediaRecorder(stream, { mimeType })
-      } catch (recorderErr) {
-        window.alert(`DIAG: new MediaRecorder() threw — ${recorderErr.name}: ${recorderErr.message} (mimeType: ${mimeType})`)
-        return
-      }
-
+      const stream = canvas.captureStream(15)
+      const recorder = new MediaRecorder(stream, { mimeType })
       const chunks = []
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data)
@@ -661,8 +645,6 @@ export default function FrameDesigner() {
       })
 
       recorder.start()
-      window.alert(`DIAG: recorder.start() called, state="${recorder.state}", mimeType="${mimeType}"`)
-
       let step = 0
       const interval = setInterval(() => {
         const img = images[sequence[step % sequence.length]]
@@ -671,11 +653,7 @@ export default function FrameDesigner() {
         step += 1
         if (step >= totalSteps) {
           clearInterval(interval)
-          try {
-            recorder.stop()
-          } catch (stopErr) {
-            window.alert(`DIAG: recorder.stop() threw — ${stopErr.name}: ${stopErr.message} (state was "${recorder.state}")`)
-          }
+          if (recorder.state !== 'inactive') recorder.stop()
         }
       }, frameDurationMs)
 
@@ -685,22 +663,19 @@ export default function FrameDesigner() {
         clearInterval(interval)
         if (raceErr.message === 'timeout') {
           window.alert(
-            `DIAG: timed out waiting for 'stop' — recorder.state="${recorder.state}", chunks=${chunks.length}`
+            'Video recording is not supported reliably on this browser. Please try again on a recent desktop Chrome, Edge, or Firefox.'
           )
           return
         }
-        window.alert(`DIAG: recorder error — ${raceErr.name}: ${raceErr.message}`)
-        return
+        throw raceErr
       }
-
-      window.alert(`DIAG: recorder stopped normally, chunks=${chunks.length}`)
 
       const blob = new Blob(chunks, { type: mimeType })
       const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
       const filename = `${frameName.trim() || 'luvibooth-boomerang'}.${extension}`
       await saveOrShareBlob(blob, filename, mimeType)
     } catch (err) {
-      window.alert(`DIAG: unexpected error — ${err.name}: ${err.message}`)
+      window.alert('Could not create the video. Please try again.')
     } finally {
       setVideoExporting(false)
     }
