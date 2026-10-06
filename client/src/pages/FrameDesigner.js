@@ -11,6 +11,25 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import { useUserPlan } from '../hooks/useUserPlan'
 import { FREE_PLAN_NAME } from '../constants/plans'
+import stickerHeartScribble from '../assets/stickers/heart-scribble.png'
+import stickerHeartOutline from '../assets/stickers/heart-outline.png'
+import stickerBunny from '../assets/stickers/bunny.png'
+import stickerLips from '../assets/stickers/lips.png'
+import stickerXoxo from '../assets/stickers/xoxo.png'
+import stickerHeartsTrio from '../assets/stickers/hearts-trio.png'
+import stickerPushpin from '../assets/stickers/pushpin.png'
+import stickerStar from '../assets/stickers/star.png'
+import stickerCameraPink from '../assets/stickers/camera-pink.png'
+import stickerFlowerPink from '../assets/stickers/flower-pink.png'
+import stickerHeartsSketchy from '../assets/stickers/hearts-sketchy.png'
+import stickerLily from '../assets/stickers/lily.png'
+import stickerBow from '../assets/stickers/bow.png'
+import stickerHeartSolid from '../assets/stickers/heart-solid.png'
+import stickerCameraVintage from '../assets/stickers/camera-vintage.png'
+import stickerStarsCluster from '../assets/stickers/stars-cluster.png'
+import stickerSlayText from '../assets/stickers/slay-text.png'
+import stickerSpeechBubble from '../assets/stickers/speech-bubble.png'
+import stickerTriangles from '../assets/stickers/triangles.png'
 
 const TOOLS = [
   { id: 'sticker', label: 'Sticker', icon: Smile },
@@ -20,38 +39,25 @@ const TOOLS = [
 ]
 
 const STICKERS = [
-  { emoji: '🦋', slug: 'butterfly' },
-  { emoji: '🌈', slug: 'rainbow' },
-  { emoji: '💗', slug: 'growing-heart' },
-  { emoji: '⭐', slug: 'star' },
-  { emoji: '✨', slug: 'sparkles' },
-  { emoji: '🌟', slug: 'glowing-star' },
-  { emoji: '💖', slug: 'sparkling-heart' },
-  { emoji: '💕', slug: 'two-hearts' },
-  { emoji: '🎀', slug: 'ribbon' },
-  { emoji: '🎉', slug: 'party-popper' },
-  { emoji: '🎊', slug: 'confetti-ball' },
-  { emoji: '🎈', slug: 'balloon' },
-  { emoji: '🥳', slug: 'partying-face' },
-  { emoji: '😍', slug: 'smiling-face-with-heart-eyes' },
-  { emoji: '😎', slug: 'smiling-face-with-sunglasses' },
-  { emoji: '🤩', slug: 'star-struck' },
-  { emoji: '😘', slug: 'face-blowing-a-kiss' },
-  { emoji: '🔥', slug: 'fire' },
-  { emoji: '👑', slug: 'crown' },
-  { emoji: '🌸', slug: 'cherry-blossom' },
-  { emoji: '🌺', slug: 'hibiscus' },
-  { emoji: '🌼', slug: 'blossom' },
-  { emoji: '☀️', slug: 'sun' },
-  { emoji: '🌙', slug: 'crescent-moon' },
-  { emoji: '❄️', slug: 'snowflake' },
-  { emoji: '🍒', slug: 'cherries' },
-  { emoji: '🍩', slug: 'doughnut' },
-  { emoji: '☕', slug: 'hot-beverage' },
-  { emoji: '📸', slug: 'camera-with-flash' },
-  { emoji: '💫', slug: 'dizzy' },
-  { emoji: '🫶', slug: 'heart-hands' },
-  { emoji: '💜', slug: 'purple-heart' },
+  { name: 'heart-scribble', src: stickerHeartScribble },
+  { name: 'heart-outline', src: stickerHeartOutline },
+  { name: 'bunny', src: stickerBunny },
+  { name: 'lips', src: stickerLips },
+  { name: 'xoxo', src: stickerXoxo },
+  { name: 'hearts-trio', src: stickerHeartsTrio },
+  { name: 'pushpin', src: stickerPushpin },
+  { name: 'star', src: stickerStar },
+  { name: 'camera-pink', src: stickerCameraPink },
+  { name: 'flower-pink', src: stickerFlowerPink },
+  { name: 'hearts-sketchy', src: stickerHeartsSketchy },
+  { name: 'lily', src: stickerLily },
+  { name: 'bow', src: stickerBow },
+  { name: 'heart-solid', src: stickerHeartSolid },
+  { name: 'camera-vintage', src: stickerCameraVintage },
+  { name: 'stars-cluster', src: stickerStarsCluster },
+  { name: 'slay-text', src: stickerSlayText },
+  { name: 'speech-bubble', src: stickerSpeechBubble },
+  { name: 'triangles', src: stickerTriangles },
 ]
 
 const COLORS = [
@@ -246,7 +252,7 @@ export default function FrameDesigner() {
   )
 
   const handleAddSticker = (sticker) => {
-    const newEl = { id: nextId(), type: 'sticker', emoji: sticker.emoji, slug: sticker.slug, x: 45, y: 40, size: 44 }
+    const newEl = { id: nextId(), type: 'sticker', src: sticker.src, x: 45, y: 40, size: 44 }
     const nextElements = [...elements, newEl]
     setElements(nextElements)
     pushHistory(nextElements, strokes)
@@ -475,15 +481,27 @@ export default function FrameDesigner() {
   const drawElements = async (ctx, scale) => {
     for (const el of elements) {
       if (el.type === 'sticker') {
-        try {
-          const img = await loadImage(getFluentUrl(el.slug))
-          ctx.drawImage(img, el.x * scale, el.y * scale, el.size * scale, el.size * scale)
-        } catch {
+        // Local sticker assets (el.src) load directly; older stickers placed
+        // from frame templates only carry a Fluent emoji slug, with Twemoji
+        // as a fallback source.
+        if (el.src) {
           try {
-            const fallbackImg = await loadImage(getTwemojiUrl(el.emoji))
-            ctx.drawImage(fallbackImg, el.x * scale, el.y * scale, el.size * scale, el.size * scale)
+            const img = await loadImage(el.src)
+            ctx.drawImage(img, el.x * scale, el.y * scale, el.size * scale, el.size * scale)
           } catch {
-            // skip sticker if both sources fail
+            // skip sticker if it fails to load
+          }
+        } else {
+          try {
+            const img = await loadImage(getFluentUrl(el.slug))
+            ctx.drawImage(img, el.x * scale, el.y * scale, el.size * scale, el.size * scale)
+          } catch {
+            try {
+              const fallbackImg = await loadImage(getTwemojiUrl(el.emoji))
+              ctx.drawImage(fallbackImg, el.x * scale, el.y * scale, el.size * scale, el.size * scale)
+            } catch {
+              // skip sticker if both sources fail
+            }
           }
         }
       } else {
@@ -718,14 +736,10 @@ export default function FrameDesigner() {
                     className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center p-1.5 transition"
                   >
                     <img
-                      src={getFluentUrl(sticker.slug)}
-                      alt={sticker.slug}
+                      src={sticker.src}
+                      alt={sticker.name}
                       className="w-full h-full object-contain"
                       draggable={false}
-                      onError={(e) => {
-                        e.target.onerror = null
-                        e.target.src = getTwemojiUrl(sticker.emoji)
-                      }}
                     />
                   </button>
                 ))}
@@ -919,11 +933,12 @@ export default function FrameDesigner() {
                 >
                   {el.type === 'sticker' ? (
                     <img
-                      src={getFluentUrl(el.slug)}
-                      alt={el.slug}
+                      src={el.src || getFluentUrl(el.slug)}
+                      alt={el.src ? '' : el.slug}
                       style={{ width: el.size, height: el.size }}
                       draggable={false}
                       onError={(e) => {
+                        if (el.src) return
                         e.target.onerror = null
                         e.target.src = getTwemojiUrl(el.emoji)
                       }}
