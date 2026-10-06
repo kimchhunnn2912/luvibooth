@@ -9,6 +9,9 @@ import frame8Overlay from '../assets/frame_8.png'
 import frame10Overlay from '../assets/frame_10.png'
 import frame11Overlay from '../assets/frame_11.png'
 import frame12Overlay from '../assets/frame_12.png'
+import frame13Overlay from '../assets/frame_13.png'
+import frame14Overlay from '../assets/frame_14.png'
+import frame15Overlay from '../assets/frame_15.png'
 
 // Real, pre-designed frame templates. Each "image" template is a transparent
 // PNG (decoration only) laid on top of the user's photos, with `slots`
@@ -198,6 +201,54 @@ export const FRAME_TEMPLATES = [
       { x: 44, y: 151, w: 511, h: 420 },
       { x: 44, y: 625, w: 511, h: 420 },
       { x: 44, y: 1099, w: 511, h: 420 },
+    ],
+  },
+  {
+    id: 'frame-13',
+    name: 'Starlight Filmstrip',
+    badge: 'Free',
+    moods: ['cute', 'pastel'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame13Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 63, y: 68, w: 468, h: 468 },
+      { x: 63, y: 576, w: 468, h: 468 },
+      { x: 63, y: 1083, w: 468, h: 469 },
+    ],
+  },
+  {
+    id: 'frame-14',
+    name: 'Squiggle Checker',
+    badge: 'New',
+    moods: ['warm-bright', 'cute'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame14Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 29, y: 37, w: 545, h: 469 },
+      { x: 43, y: 554, w: 517, h: 439 },
+      { x: 30, y: 1041, w: 540, h: 467 },
+    ],
+  },
+  {
+    id: 'frame-15',
+    name: 'Sweetheart Checker',
+    badge: 'New',
+    moods: ['cute', 'pastel'],
+    type: 'image',
+    layoutId: 'B',
+    overlay: frame15Overlay,
+    canvasWidth: 600,
+    canvasHeight: 1800,
+    slots: [
+      { x: 40, y: 125, w: 523, h: 363 },
+      { x: 42, y: 575, w: 519, h: 389 },
+      { x: 58, y: 1051, w: 487, h: 415 },
     ],
   },
 ]
