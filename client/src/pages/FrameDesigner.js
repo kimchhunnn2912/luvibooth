@@ -623,8 +623,17 @@ export default function FrameDesigner() {
       const cycles = 3
       const totalSteps = sequence.length * cycles
 
-      const finished = new Promise((resolve) => {
+      // Some mobile browsers (iOS Safari in particular) accept
+      // canvas.captureStream()/MediaRecorder.start() without error but then
+      // never fire 'stop' — leaving this hung forever with no error — so we
+      // race against a timeout instead of awaiting onstop unconditionally.
+      const finished = new Promise((resolve, reject) => {
         recorder.onstop = resolve
+        recorder.onerror = (e) => reject(e.error || new Error('Recording failed'))
+      })
+      const expectedDurationMs = totalSteps * frameDurationMs
+      const timedOut = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('timeout')), expectedDurationMs + 5000)
       })
 
       recorder.start()
@@ -640,7 +649,18 @@ export default function FrameDesigner() {
         }
       }, frameDurationMs)
 
-      await finished
+      try {
+        await Promise.race([finished, timedOut])
+      } catch (raceErr) {
+        clearInterval(interval)
+        if (raceErr.message === 'timeout') {
+          window.alert(
+            'Video recording is not supported reliably on this browser. Please try again on a recent desktop Chrome, Edge, or Firefox.'
+          )
+          return
+        }
+        throw raceErr
+      }
 
       const blob = new Blob(chunks, { type: mimeType })
       const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
