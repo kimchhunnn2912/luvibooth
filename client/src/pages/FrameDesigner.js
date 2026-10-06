@@ -959,7 +959,10 @@ export default function FrameDesigner() {
                   </button>
 
                   {selectedId === el.id && (
-                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 translate-y-full flex items-center gap-1 rounded-full bg-white border border-gray-300 shadow-sm px-1 py-1">
+                    <div
+                      onDoubleClick={(e) => e.stopPropagation()}
+                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 translate-y-full flex items-center gap-1 rounded-full bg-white border border-gray-300 shadow-sm px-1 py-1"
+                    >
                       <button
                         type="button"
                         onClick={handleZoomOut}
