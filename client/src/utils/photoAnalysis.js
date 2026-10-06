@@ -68,18 +68,29 @@ const analyzePhotosByColor = async (photos) => {
 // Sends up to two captured photos to the server for real vision-based
 // analysis (mood + any holiday occasion actually visible in the photo),
 // falling back to the color-only heuristic if the server can't be reached
-// or photo analysis isn't configured there.
+// or photo analysis isn't configured there. The free-tier server can take
+// 30-60s to wake from a cold start, so this is capped at 12s rather than
+// left to hang indefinitely — a quick heuristic guess beats a frozen screen.
+const ANALYZE_TIMEOUT_MS = 12000
+
 export const analyzePhotos = async (photos) => {
   try {
-    const res = await fetch(`${SERVER_URL}/analyze-photo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photos: photos.filter(Boolean).slice(0, 2) }),
-    })
-    const data = await res.json()
-    if (res.ok && data.mood) return data
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS)
+    try {
+      const res = await fetch(`${SERVER_URL}/analyze-photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photos: photos.filter(Boolean).slice(0, 2) }),
+        signal: controller.signal,
+      })
+      const data = await res.json()
+      if (res.ok && data.mood) return data
+    } finally {
+      clearTimeout(timeout)
+    }
   } catch {
-    // network error — fall through to the local heuristic
+    // network error or timeout — fall through to the local heuristic
   }
   return analyzePhotosByColor(photos)
 }
