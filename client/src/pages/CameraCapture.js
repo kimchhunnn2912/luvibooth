@@ -55,7 +55,7 @@ export default function CameraCapture() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const initialLayoutId = location.state?.layoutId || 'A'
+  const initialLayoutId = location.state?.layoutId || 'C'
   const template = location.state?.template || null
 
   const [mode, setMode] = useState('capture')

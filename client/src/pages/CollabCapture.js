@@ -62,7 +62,7 @@ export default function CollabCapture() {
     user?.email?.split('@')[0] ||
     'You'
 
-  const [layoutId, setLayoutId] = useState('A')
+  const [layoutId, setLayoutId] = useState('C')
   const [delay, setDelay] = useState(3)
   const [filter, setFilter] = useState(FILTERS[0])
   const [friendName, setFriendName] = useState('')

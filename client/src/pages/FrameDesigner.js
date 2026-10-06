@@ -132,7 +132,7 @@ export default function FrameDesigner() {
   const { user } = useAuth()
   const { effectivePlanName } = useUserPlan()
   const hasWatermark = effectivePlanName === FREE_PLAN_NAME
-  const layoutId = location.state?.layoutId || 'A'
+  const layoutId = location.state?.layoutId || 'C'
   const capturedPhotos = location.state?.photos || []
   const template = location.state?.template || null
   const stripId = location.state?.stripId || null

@@ -12,7 +12,7 @@ export default function FrameRecommendation() {
   const location = useLocation()
   const navigate = useNavigate()
   const photos = location.state?.photos || []
-  const layoutId = location.state?.layoutId || 'A'
+  const layoutId = location.state?.layoutId || 'C'
   const layout = LAYOUTS.find((l) => l.id === layoutId) || LAYOUTS[0]
 
   const [analyzing, setAnalyzing] = useState(true)
