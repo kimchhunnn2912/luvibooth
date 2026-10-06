@@ -29,7 +29,22 @@ const FILTERS = [
   { id: 'warm', label: 'Warm', css: 'sepia(0.3) saturate(1.3) brightness(1.05)' },
 ]
 
-const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+// A STUN-only config can't punch through when both peers are behind
+// different restrictive NATs (common across different wifi/mobile
+// networks) — add a free public TURN relay (OpenRelay) as a fallback so
+// video still connects even when a direct peer-to-peer path isn't possible.
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+}
 
 const pillBase = 'rounded-full px-4 py-2 font-semibold text-sm transition border-2 disabled:opacity-50 disabled:cursor-not-allowed'
 const pillActive = 'bg-pink-primary text-white border-pink-primary'
