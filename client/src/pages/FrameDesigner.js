@@ -81,7 +81,7 @@ const BRUSH_SIZES = [3, 6, 10, 16]
 const CustomColorSwatch = ({ value, onChange }) => (
   <label
     title="Pick any color"
-    className="relative w-9 h-9 rounded-full cursor-pointer p-[2px]"
+    className="relative inline-flex w-9 h-9 rounded-full cursor-pointer p-[2px] overflow-hidden"
     style={{ background: 'conic-gradient(red, orange, yellow, lime, cyan, blue, magenta, red)' }}
   >
     <span className="flex w-full h-full rounded-full bg-white items-center justify-center">
