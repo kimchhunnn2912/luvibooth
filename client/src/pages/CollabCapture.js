@@ -82,7 +82,6 @@ export default function CollabCapture() {
   const [filter, setFilter] = useState(FILTERS[0])
   const [friendName, setFriendName] = useState('')
   const [friendConnected, setFriendConnected] = useState(false)
-  const [connDebug, setConnDebug] = useState({})
   const [memberCount, setMemberCount] = useState(1)
   const [localReady, setLocalReady] = useState(false)
   const [cameraError, setCameraError] = useState('')
@@ -142,6 +141,17 @@ export default function CollabCapture() {
     }
   }, [])
 
+  // Once capture is finished, release the camera and tear down the peer
+  // connection instead of leaving both devices' video rolling indefinitely.
+  useEffect(() => {
+    if (!done) return
+    localStreamRef.current?.getTracks().forEach((t) => t.stop())
+    localStreamRef.current = null
+    setLocalReady(false)
+    pcRef.current?.close()
+    pcRef.current = null
+  }, [done])
+
   // The camera stream (and the peer's remote stream) can resolve before the
   // frame-selection gate clears — at that point the <video> elements don't
   // exist in the DOM yet, so assigning srcObject in those callbacks has
@@ -168,16 +178,10 @@ export default function CollabCapture() {
       remoteStreamRef.current = e.streams[0]
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]
       setFriendConnected(true)
-      const [videoTrack] = e.streams[0].getVideoTracks()
-      setConnDebug((d) => ({ ...d, remoteTrack: videoTrack ? `${videoTrack.readyState}/muted=${videoTrack.muted}` : 'none' }))
     }
-    pc.oniceconnectionstatechange = () => setConnDebug((d) => ({ ...d, ice: pc.iceConnectionState }))
-    pc.onconnectionstatechange = () => setConnDebug((d) => ({ ...d, conn: pc.connectionState }))
-    const localTrackCount = localStreamRef.current?.getTracks().length || 0
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current))
     }
-    setConnDebug((d) => ({ ...d, localTracks: localTrackCount }))
     pcRef.current = pc
     return pc
   }, [roomCode])
@@ -277,12 +281,11 @@ export default function CollabCapture() {
 
     const handleSignal = async ({ signal }) => {
       if (signal.type === 'offer') {
-        setConnDebug((d) => ({ ...d, step: 'offer received, waiting for camera' }))
         // Make sure our own camera is ready before answering, so the track
         // actually gets attached instead of racing the permission prompt.
         const gotCamera = await waitFor(() => !!localStreamRef.current)
         if (!gotCamera) {
-          setConnDebug((d) => ({ ...d, step: 'offer ERROR: camera never became ready (20s timeout)' }))
+          console.error('Collab Booth: camera never became ready, could not answer offer')
           return
         }
         try {
@@ -291,16 +294,14 @@ export default function CollabCapture() {
           const answer = await pc.createAnswer()
           await pc.setLocalDescription(answer)
           socket.emit('webrtc-signal', { roomCode, signal: { type: 'answer', sdp: answer } })
-          setConnDebug((d) => ({ ...d, step: 'answer sent' }))
         } catch (err) {
-          setConnDebug((d) => ({ ...d, step: `answer ERROR: ${err.name}: ${err.message}` }))
+          console.error('Collab Booth: failed to answer offer:', err.message)
         }
       } else if (signal.type === 'answer') {
         try {
           await pcRef.current?.setRemoteDescription(new RTCSessionDescription(signal.sdp))
-          setConnDebug((d) => ({ ...d, step: 'answer applied' }))
         } catch (err) {
-          setConnDebug((d) => ({ ...d, step: `setRemoteDescription(answer) ERROR: ${err.name}: ${err.message}` }))
+          console.error('Collab Booth: failed to apply answer:', err.message)
         }
       } else if (signal.type === 'ice-candidate') {
         try {
@@ -348,9 +349,8 @@ export default function CollabCapture() {
         if (cancelled) return
         await pc.setLocalDescription(offer)
         socket.emit('webrtc-signal', { roomCode, signal: { type: 'offer', sdp: offer } })
-        setConnDebug((d) => ({ ...d, step: 'offer sent' }))
       } catch (err) {
-        setConnDebug((d) => ({ ...d, step: `offer ERROR: ${err.name}: ${err.message}` }))
+        console.error('Collab Booth: failed to create/send offer:', err.message)
       }
     })()
     return () => {
@@ -607,7 +607,7 @@ export default function CollabCapture() {
                 {!localReady && (
                   <div className="flex flex-col items-center gap-3 text-white px-6 text-center">
                     <Camera size={32} />
-                    <p className="text-base">{cameraError || 'camera preview'}</p>
+                    <p className="text-base">{cameraError || (done ? 'Capture complete' : 'camera preview')}</p>
                   </div>
                 )}
                 {countdown && (
@@ -629,10 +629,16 @@ export default function CollabCapture() {
                   autoPlay
                   playsInline
                   style={{ filter: filter.css }}
-                  className={`w-full h-full object-cover ${friendConnected ? '' : 'hidden'}`}
+                  className={`w-full h-full object-cover ${friendConnected && !done ? '' : 'hidden'}`}
                 />
-                {!friendConnected && (
+                {!friendConnected && !done && (
                   <p className="text-white text-base px-6 text-center">Waiting for your friend to join…</p>
+                )}
+                {done && (
+                  <div className="flex flex-col items-center gap-3 text-white px-6 text-center">
+                    <Camera size={32} />
+                    <p className="text-base">Capture complete</p>
+                  </div>
                 )}
                 {countdown && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -640,11 +646,6 @@ export default function CollabCapture() {
                   </div>
                 )}
               </div>
-              {/* Temporary WebRTC diagnostics — remove once the blank-remote-video bug is found. */}
-              <p className="mt-1 text-[10px] text-gray-400 break-all">
-                local={connDebug.localTracks ?? '?'} ice={connDebug.ice ?? '?'} conn={connDebug.conn ?? '?'} remoteTrack=
-                {connDebug.remoteTrack ?? '?'} step={connDebug.step ?? '?'}
-              </p>
             </div>
           </div>
 
