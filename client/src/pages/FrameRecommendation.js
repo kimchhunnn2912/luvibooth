@@ -53,7 +53,7 @@ export default function FrameRecommendation() {
         <h1 className="text-4xl md:text-5xl font-extrabold text-dark">
           Smart Frame <span className="text-pink-primary">Recommendation</span>
         </h1>
-        <p className="mt-4 text-pink-700 text-lg max-w-xl mx-auto">
+        <p className="mt-4 text-gray-500 text-lg max-w-xl mx-auto">
           We will analyzed your photo and found the best matching frames for you!
         </p>
 
