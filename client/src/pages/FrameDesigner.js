@@ -601,6 +601,11 @@ export default function FrameDesigner() {
 
     setVideoExporting(true)
     try {
+      if (typeof window.MediaRecorder === 'undefined') {
+        window.alert('DIAG: MediaRecorder is undefined on this browser.')
+        return
+      }
+
       const images = await Promise.all(capturedPhotos.map((src) => loadImage(src)))
       const { width, height } = images[0]
 
@@ -611,8 +616,27 @@ export default function FrameDesigner() {
       ctx.drawImage(images[0], 0, 0, width, height)
       if (hasWatermark) drawWatermark(ctx, width, height)
 
-      const stream = canvas.captureStream(15)
-      const recorder = new MediaRecorder(stream, { mimeType })
+      if (typeof canvas.captureStream !== 'function') {
+        window.alert('DIAG: canvas.captureStream is not a function on this browser.')
+        return
+      }
+
+      let stream
+      try {
+        stream = canvas.captureStream(15)
+      } catch (streamErr) {
+        window.alert(`DIAG: captureStream() threw — ${streamErr.name}: ${streamErr.message}`)
+        return
+      }
+
+      let recorder
+      try {
+        recorder = new MediaRecorder(stream, { mimeType })
+      } catch (recorderErr) {
+        window.alert(`DIAG: new MediaRecorder() threw — ${recorderErr.name}: ${recorderErr.message} (mimeType: ${mimeType})`)
+        return
+      }
+
       const chunks = []
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data)
@@ -637,6 +661,8 @@ export default function FrameDesigner() {
       })
 
       recorder.start()
+      window.alert(`DIAG: recorder.start() called, state="${recorder.state}", mimeType="${mimeType}"`)
+
       let step = 0
       const interval = setInterval(() => {
         const img = images[sequence[step % sequence.length]]
@@ -645,7 +671,11 @@ export default function FrameDesigner() {
         step += 1
         if (step >= totalSteps) {
           clearInterval(interval)
-          recorder.stop()
+          try {
+            recorder.stop()
+          } catch (stopErr) {
+            window.alert(`DIAG: recorder.stop() threw — ${stopErr.name}: ${stopErr.message} (state was "${recorder.state}")`)
+          }
         }
       }, frameDurationMs)
 
@@ -655,19 +685,22 @@ export default function FrameDesigner() {
         clearInterval(interval)
         if (raceErr.message === 'timeout') {
           window.alert(
-            'Video recording is not supported reliably on this browser. Please try again on a recent desktop Chrome, Edge, or Firefox.'
+            `DIAG: timed out waiting for 'stop' — recorder.state="${recorder.state}", chunks=${chunks.length}`
           )
           return
         }
-        throw raceErr
+        window.alert(`DIAG: recorder error — ${raceErr.name}: ${raceErr.message}`)
+        return
       }
+
+      window.alert(`DIAG: recorder stopped normally, chunks=${chunks.length}`)
 
       const blob = new Blob(chunks, { type: mimeType })
       const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
       const filename = `${frameName.trim() || 'luvibooth-boomerang'}.${extension}`
       await saveOrShareBlob(blob, filename, mimeType)
     } catch (err) {
-      window.alert('Could not create the video. Please try again.')
+      window.alert(`DIAG: unexpected error — ${err.name}: ${err.message}`)
     } finally {
       setVideoExporting(false)
     }
