@@ -539,9 +539,12 @@ export default function FrameDesigner() {
     }
   }
 
-  const handleDownload = async () => {
+  // Builds the full decorated canvas (photos + overlay/border + stickers/text
+  // + watermark). Shared by the download button and the preview autosave
+  // below, so both always render the same thing.
+  const buildExportCanvas = async () => {
     const overlay = canvasRef.current
-    if (!overlay) return
+    if (!overlay) return null
 
     const exportCanvas = document.createElement('canvas')
     const ctx = exportCanvas.getContext('2d')
@@ -593,28 +596,58 @@ export default function FrameDesigner() {
       drawWatermark(ctx, exportCanvas.width, exportCanvas.height)
     }
 
+    return exportCanvas
+  }
+
+  // Syncs the profile's saved preview to the current decorated version, so
+  // "My recent photo strips" reflects whatever's actually been styled here
+  // instead of freezing at the raw just-captured preview.
+  const syncSavedPreview = (exportCanvas) => {
+    if (!stripId || !user || !exportCanvas) return
+    const previewCanvas = document.createElement('canvas')
+    const previewScale = Math.min(1, 640 / exportCanvas.width)
+    previewCanvas.width = exportCanvas.width * previewScale
+    previewCanvas.height = exportCanvas.height * previewScale
+    previewCanvas.getContext('2d').drawImage(exportCanvas, 0, 0, previewCanvas.width, previewCanvas.height)
+    const preview = previewCanvas.toDataURL('image/jpeg', 0.85)
+    supabase
+      .from('photo_strips')
+      .update({ preview })
+      .eq('id', stripId)
+      .then(({ error }) => {
+        if (error) console.error('Failed to update saved photo strip preview:', error.message)
+      })
+  }
+
+  const handleDownload = async () => {
+    const exportCanvas = await buildExportCanvas()
+    if (!exportCanvas) return
+
     const filename = `${frameName.trim() || 'luvibooth-frame'}.png`
     const blob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'))
     if (blob) await saveOrShareBlob(blob, filename, 'image/png')
 
-    // Also sync the profile's saved preview to this decorated version, so
-    // "My recent photo strips" reflects the actual frame, not the raw capture.
-    if (stripId && user) {
-      const previewCanvas = document.createElement('canvas')
-      const previewScale = Math.min(1, 640 / exportCanvas.width)
-      previewCanvas.width = exportCanvas.width * previewScale
-      previewCanvas.height = exportCanvas.height * previewScale
-      previewCanvas.getContext('2d').drawImage(exportCanvas, 0, 0, previewCanvas.width, previewCanvas.height)
-      const preview = previewCanvas.toDataURL('image/jpeg', 0.85)
-      supabase
-        .from('photo_strips')
-        .update({ preview })
-        .eq('id', stripId)
-        .then(({ error }) => {
-          if (error) console.error('Failed to update saved photo strip preview:', error.message)
-        })
-    }
+    syncSavedPreview(exportCanvas)
   }
+
+  // Keep the gallery preview in sync as the user styles the frame (border
+  // color, stickers, text), not just when they click Download — otherwise
+  // customizing and then navigating away without downloading leaves "My
+  // recent photo strips" stuck showing the plain just-captured version.
+  const skipNextAutosaveRef = useRef(true)
+  useEffect(() => {
+    if (!stripId || !user) return
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false
+      return
+    }
+    const timeout = setTimeout(async () => {
+      const exportCanvas = await buildExportCanvas()
+      syncSavedPreview(exportCanvas)
+    }, 1500)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [borderColor, elements, stripId, user])
 
   const handleDownloadVideo = async () => {
     if (videoExporting || capturedPhotos.length === 0) return
