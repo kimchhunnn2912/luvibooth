@@ -82,6 +82,7 @@ export default function CollabCapture() {
   const [filter, setFilter] = useState(FILTERS[0])
   const [friendName, setFriendName] = useState('')
   const [friendConnected, setFriendConnected] = useState(false)
+  const [connDebug, setConnDebug] = useState({})
   const [memberCount, setMemberCount] = useState(1)
   const [localReady, setLocalReady] = useState(false)
   const [cameraError, setCameraError] = useState('')
@@ -167,10 +168,16 @@ export default function CollabCapture() {
       remoteStreamRef.current = e.streams[0]
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]
       setFriendConnected(true)
+      const [videoTrack] = e.streams[0].getVideoTracks()
+      setConnDebug((d) => ({ ...d, remoteTrack: videoTrack ? `${videoTrack.readyState}/muted=${videoTrack.muted}` : 'none' }))
     }
+    pc.oniceconnectionstatechange = () => setConnDebug((d) => ({ ...d, ice: pc.iceConnectionState }))
+    pc.onconnectionstatechange = () => setConnDebug((d) => ({ ...d, conn: pc.connectionState }))
+    const localTrackCount = localStreamRef.current?.getTracks().length || 0
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current))
     }
+    setConnDebug((d) => ({ ...d, localTracks: localTrackCount }))
     pcRef.current = pc
     return pc
   }, [roomCode])
@@ -613,6 +620,11 @@ export default function CollabCapture() {
                   </div>
                 )}
               </div>
+              {/* Temporary WebRTC diagnostics — remove once the blank-remote-video bug is found. */}
+              <p className="mt-1 text-[10px] text-gray-400 break-all">
+                local={connDebug.localTracks ?? '?'} ice={connDebug.ice ?? '?'} conn={connDebug.conn ?? '?'} remoteTrack=
+                {connDebug.remoteTrack ?? '?'}
+              </p>
             </div>
           </div>
 
