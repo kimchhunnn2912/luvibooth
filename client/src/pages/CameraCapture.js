@@ -387,42 +387,43 @@ export default function CameraCapture() {
           </button>
         </div>
 
-        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
-            <span className="text-lg font-extrabold text-dark">Layout:</span>
-            <div className="relative">
-              <select
-                value={layoutId}
-                disabled={busy}
-                onChange={(e) => handleLayoutChange(e.target.value)}
-                className={`${selectClasses} w-44 truncate`}
-              >
-                {LAYOUTS.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    Layout {l.id} ({l.pose})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
-            </div>
+        <div className="mt-3 grid grid-cols-[auto_auto] gap-x-2 gap-y-3 justify-center items-center w-fit mx-auto">
+          <span className="text-lg font-extrabold text-dark text-right">Layout:</span>
+          <div className="relative">
+            <select
+              value={layoutId}
+              disabled={busy}
+              onChange={(e) => handleLayoutChange(e.target.value)}
+              className={`${selectClasses} w-44 truncate`}
+            >
+              {LAYOUTS.map((l) => (
+                <option key={l.id} value={l.id}>
+                  Layout {l.id} ({l.pose})
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
           </div>
 
           {mode === 'capture' && (
-            <div className="relative">
-              <select
-                value={delay}
-                disabled={busy}
-                onChange={(e) => setDelay(Number(e.target.value))}
-                className={selectClasses}
-              >
-                {DELAYS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}s delay
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
-            </div>
+            <>
+              <span />
+              <div className="relative">
+                <select
+                  value={delay}
+                  disabled={busy}
+                  onChange={(e) => setDelay(Number(e.target.value))}
+                  className={`${selectClasses} w-44`}
+                >
+                  {DELAYS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}s delay
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-pink-primary" />
+              </div>
+            </>
           )}
         </div>
 
