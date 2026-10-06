@@ -387,7 +387,7 @@ export default function CameraCapture() {
           </button>
         </div>
 
-        <div className="mt-3 flex flex-col items-center gap-3">
+        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <span className="text-lg font-extrabold text-dark">Layout:</span>
             <div className="relative">
