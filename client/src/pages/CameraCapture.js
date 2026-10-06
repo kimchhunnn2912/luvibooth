@@ -394,7 +394,7 @@ export default function CameraCapture() {
               value={layoutId}
               disabled={busy}
               onChange={(e) => handleLayoutChange(e.target.value)}
-              className={`${selectClasses} w-44 truncate`}
+              className={`${selectClasses} w-36 truncate`}
             >
               {LAYOUTS.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -413,7 +413,7 @@ export default function CameraCapture() {
                   value={delay}
                   disabled={busy}
                   onChange={(e) => setDelay(Number(e.target.value))}
-                  className={`${selectClasses} w-44`}
+                  className={`${selectClasses} w-36`}
                 >
                   {DELAYS.map((d) => (
                     <option key={d} value={d}>
