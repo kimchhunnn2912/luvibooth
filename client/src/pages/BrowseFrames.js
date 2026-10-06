@@ -13,7 +13,7 @@ import coinIcon from '../assets/coin.png'
 
 const TEMPLATES = FRAME_TEMPLATES
 
-const FILTERS = ['All', 'My Frames', 'Free', 'Premium', 'New', 'On trend']
+const FILTERS = ['All', 'My Frames', 'Free', 'Premium', 'New', 'On trend', 'Holiday']
 
 const badgeClasses = {
   Free: 'bg-white text-dark',
